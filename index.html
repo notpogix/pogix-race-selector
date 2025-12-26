@@ -1,486 +1,806 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Marble Maze Race</title>
-<!-- Matter.js CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-<style>
-  :root{
-    --bg:#0f1724;
-    --panel:#0b1220cc;
-    --accent:#10b981;
-    --text:#e6eef8;
-  }
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
-  body{background:linear-gradient(180deg,#071021 0%, #071a2a 100%);color:var(--text);display:flex;flex-direction:column;align-items:center;}
-  header{width:100%;padding:12px 20px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  h1{font-size:18px;margin:0;color:var(--accent);}
-  .controls{display:flex;gap:8px;align-items:center;}
-  .panel{background:var(--panel);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.6);}
-  #ui{position:fixed;right:18px;top:18px;width:220px;z-index:50;}
-  #leaderboard{height:220px;overflow:auto;padding:10px;}
-  label{font-size:12px;color:#9fb6d0;display:block;margin-bottom:6px;}
-  textarea,input,select,button{width:100%;box-sizing:border-box;border-radius:8px;border:1px solid rgba(255,255,255,0.06);padding:8px;background:transparent;color:var(--text);}
-  button{cursor:pointer;border:none;background:linear-gradient(90deg,#0ea5a4,#06b6d4);color:#021; font-weight:700;padding:10px;}
-  button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);font-weight:600;}
-  #canvasWrap{width:100%;max-width:900px;height:1200px;margin:20px auto;border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(2,6,23,0.6);position:relative;}
-  canvas{display:block;background:linear-gradient(180deg,#082033 0%, #04121a 100%);}
-  .finishLine{position:absolute;left:0;right:0;height:6px;background:linear-gradient(90deg,#f97316,#f43f5e);bottom:40px;z-index:40;}
-  .startLine{position:absolute;left:0;right:0;height:6px;background:linear-gradient(90deg,#60a5fa,#7c3aed);top:40px;z-index:40;}
-  .meta{position:fixed;left:18px;top:18px;color:#9fb6d0;font-size:13px;}
-  .small{font-size:12px;color:#9fb6d0;}
-  .nameRow{display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px;margin-bottom:6px;}
-  .colorDot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#021;}
-  .rankLabel{flex:1;font-weight:700;}
-  footer{width:100%;padding:12px;text-align:center;color:#9fb6d0;font-size:13px;}
-  @media(max-width:720px){
-    #canvasWrap{height:1000px;max-width:420px;}
-    #ui{position:static;margin:12px;}
-    header{flex-direction:column;align-items:flex-start;gap:8px;}
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marble Race - Elimination Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+        #container {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+        #gameArea {
+            flex: 1;
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        #leaderboard {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        #setupScreen, #gameScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+        #gameScreen {
+            display: none;
+            background: transparent;
+            pointer-events: none;
+        }
+        .setup-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .mode-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 15px;
+            border: 3px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .names-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .name-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: white;
+            font-weight: bold;
+        }
+        .remove-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            color: white;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+        .leaderboard-item.winner {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+        .leaderboard-item.eliminated {
+            opacity: 0.5;
+            background: #e9ecef;
+        }
+        .rank {
+            font-weight: bold;
+            font-size: 18px;
+            min-width: 30px;
+        }
+        .color-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .player-name {
+            flex: 1;
+            font-weight: 600;
+        }
+        .progress {
+            font-size: 12px;
+            color: #666;
+        }
+        #winnerModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            text-align: center;
+            display: none;
+            pointer-events: all;
+        }
+        #winnerModal h2 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        #winnerModal .winner-name {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .modal-btn {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .modal-btn.continue {
+            background: #28a745;
+            color: white;
+        }
+        .modal-btn.restart {
+            background: #667eea;
+            color: white;
+        }
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        canvas {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-<header>
-  <h1>Marble Maze Race</h1>
-  <div class="controls">
-    <div class="panel" style="min-width:260px;">
-      <label>Enter names (one per line)</label>
-      <textarea id="namesInput" rows="4" placeholder="Alice&#10;Bob&#10;Charlie"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <select id="modeSelect" title="Mode">
-          <option value="remove">Remove Winner (keep playing)</option>
-          <option value="elimination">Elimination (last out each round)</option>
-        </select>
-        <button id="startBtn">Start Race</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button id="continueBtn" class="secondary">Continue</button>
-        <button id="removeWinnerBtn" class="secondary">Remove Winner</button>
-        <button id="resetBtn" class="secondary">Reset</button>
-      </div>
-      <div style="margin-top:8px;" class="small">Tip: Add many names for a longer, more chaotic race.</div>
+    <div id="container">
+        <div id="gameArea">
+            <div id="setupScreen">
+                <div class="setup-box">
+                    <h1>🏁 Marble Race 🏁</h1>
+                    <h2>Select Game Mode</h2>
+                    <div class="mode-buttons">
+                        <button class="mode-btn active" data-mode="winner">Winner Takes All</button>
+                        <button class="mode-btn" data-mode="elimination">Last Place Elimination</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="nameInput" placeholder="Enter player name and press Enter" />
+                        <div class="names-list" id="namesList"></div>
+                    </div>
+                    <button class="start-btn" id="startBtn" disabled>Start Race (Need 2+ players)</button>
+                </div>
+            </div>
+            <div id="gameCanvas"></div>
+        </div>
+        <div id="leaderboard">
+            <h2 style="text-align: center; color: #667eea; margin-bottom: 20px;">🏆 Leaderboard</h2>
+            <div id="leaderboardList"></div>
+        </div>
     </div>
-  </div>
-</header>
 
-<div id="canvasWrap" class="panel">
-  <div class="startLine"></div>
-  <div class="finishLine"></div>
-  <canvas id="world"></canvas>
-</div>
-
-<div id="ui">
-  <div class="panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <strong>Leaderboard</strong>
-      <span id="roundInfo" class="small">Round 0</span>
+    <div id="winnerModal">
+        <h2>🎉 Winner! 🎉</h2>
+        <div class="winner-name" id="winnerName"></div>
+        <div id="modalButtons"></div>
     </div>
-    <div id="leaderboard"></div>
-    <div style="margin-top:8px;">
-      <div class="small">Round timer: <span id="timer">00:00</span></div>
-      <div class="small">Active balls: <span id="activeCount">0</span></div>
-    </div>
-  </div>
-</div>
 
-<div class="meta panel">
-  <div><strong>Mode:</strong> <span id="modeLabel">Remove Winner</span></div>
-  <div class="small">Start at top, finish at bottom</div>
-</div>
+    <script>
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52C15A'];
+        let players = [];
+        let gameMode = 'winner';
+        let engine, render, world;
+        let balls = [];
+        let isRacing = false;
+        let finishLine;
+        let eliminatedPlayers = [];
+        let mapHeight = 3000;
+        let gameCanvas;
 
-<footer class="panel small">No login required — enter names and start. Physics powered by Matter.js</footer>
+        // Setup event listeners
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                gameMode = this.dataset.mode;
+            });
+        });
 
-<script>
-/* Marble Maze Race
-   Single-file site using Matter.js
-   Paste into index.html and open in browser.
-*/
+        document.getElementById('nameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                addPlayer(this.value.trim());
+                this.value = '';
+            }
+        });
 
-// ----- Utilities -----
-const COLORS = [
-  '#F97316','#F43F5E','#FB7185','#60A5FA','#7C3AED','#34D399','#F59E0B','#06B6D4','#EF4444','#A78BFA',
-  '#FDE68A','#34D399','#60A5FA','#F472B6','#FCA5A5','#93C5FD','#C7B3FF'
-];
-function pickColor(i){ return COLORS[i % COLORS.length]; }
-function letterOf(name){ return (name||'').trim().charAt(0).toUpperCase() || '?'; }
-function formatTime(s){ const m=Math.floor(s/60), sec=Math.floor(s%60); return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+        document.getElementById('startBtn').addEventListener('click', startGame);
 
-// ----- Matter.js setup -----
-const { Engine, Render, Runner, Bodies, Composite, Composites, Body, Events, Mouse, MouseConstraint, Vector } = Matter;
+        function addPlayer(name) {
+            if (players.length >= 10) {
+                alert('Maximum 10 players allowed!');
+                return;
+            }
+            const player = {
+                name: name,
+                color: colors[players.length % colors.length],
+                initial: name[0].toUpperCase()
+            };
+            players.push(player);
+            updateNamesList();
+            updateStartButton();
+        }
 
-const canvas = document.getElementById('world');
-const canvasWrap = document.getElementById('canvasWrap');
-const W = canvasWrap.clientWidth;
-const H = canvasWrap.clientHeight;
-canvas.width = W;
-canvas.height = H;
+        function removePlayer(index) {
+            players.splice(index, 1);
+            updateNamesList();
+            updateStartButton();
+        }
 
-const engine = Engine.create();
-engine.gravity.y = 1.05; // adjustable for pacing
-const world = engine.world;
-world.bounds = { min: { x: 0, y: 0 }, max: { x: W, y: H } };
+        function updateNamesList() {
+            const list = document.getElementById('namesList');
+            list.innerHTML = players.map((p, i) => `
+                <span class="name-tag" style="background: ${p.color}">
+                    ${p.name}
+                    <button class="remove-btn" onclick="removePlayer(${i})">×</button>
+                </span>
+            `).join('');
+        }
 
-const render = Render.create({
-  canvas: canvas,
-  engine: engine,
-  options: {
-    width: W,
-    height: H,
-    wireframes: false,
-    background: 'transparent',
-    showAngleIndicator: false
-  }
-});
-Render.run(render);
-const runner = Runner.create();
-Runner.run(runner, engine);
+        function updateStartButton() {
+            const btn = document.getElementById('startBtn');
+            if (players.length >= 2) {
+                btn.disabled = false;
+                btn.textContent = `Start Race with ${players.length} Players`;
+            } else {
+                btn.disabled = true;
+                btn.textContent = 'Start Race (Need 2+ players)';
+            }
+        }
 
-// ----- Static walls -----
-const wallThickness = 60;
-const walls = [
-  Bodies.rectangle(W/2, -wallThickness/2, W, wallThickness, { isStatic:true }),
-  Bodies.rectangle(W/2, H + wallThickness/2, W, wallThickness, { isStatic:true }),
-  Bodies.rectangle(-wallThickness/2, H/2, wallThickness, H, { isStatic:true }),
-  Bodies.rectangle(W + wallThickness/2, H/2, wallThickness, H, { isStatic:true })
-];
-Composite.add(world, walls);
+        function startGame() {
+            document.getElementById('setupScreen').style.display = 'none';
+            initPhysics();
+            createMaze();
+            createBalls();
+            isRacing = true;
+            updateLeaderboard();
+            setupAutoScroll();
+        }
 
-// Finish line sensor (y coordinate)
-const finishY = H - 60;
+        function initPhysics() {
+            const Engine = Matter.Engine;
+            const Render = Matter.Render;
+            const World = Matter.World;
+            const Bodies = Matter.Bodies;
 
-// ----- Peg / maze generator -----
-function generatePegs(rows=18, cols=10, spacingX= W / (cols+1), spacingY = (H-160)/rows) {
-  const pegs = [];
-  const startY = 120;
-  for (let r=0;r<rows;r++){
-    const offset = (r % 2 === 0) ? spacingX/2 : 0;
-    for (let c=0;c<cols;c++){
-      const x = Math.max(40, Math.min(W-40, (c+1)*spacingX + offset));
-      const y = startY + r*spacingY + (Math.random()*spacingY*0.25);
-      const peg = Bodies.circle(x, y, 8 + Math.random()*6, {
-        isStatic: true,
-        render: { fillStyle: '#94a3b8' }
-      });
-      pegs.push(peg);
-    }
-  }
-  return pegs;
-}
-let pegs = generatePegs(22, 12); // dense, long map
-Composite.add(world, pegs);
+            engine = Engine.create();
+            world = engine.world;
+            world.gravity.y = 1.2;
 
-// Add some angled obstacles / ramps
-function addRamps(){
-  const ramps = [];
-  ramps.push(Bodies.rectangle(W*0.25, H*0.45, W*0.5, 12, { isStatic:true, angle: -0.25, render:{fillStyle:'#334155'} }));
-  ramps.push(Bodies.rectangle(W*0.75, H*0.65, W*0.5, 12, { isStatic:true, angle: 0.18, render:{fillStyle:'#334155'} }));
-  Composite.add(world, ramps);
-}
-addRamps();
+            gameCanvas = document.getElementById('gameCanvas');
+            const gameArea = document.getElementById('gameArea');
+            render = Render.create({
+                element: gameCanvas,
+                engine: engine,
+                options: {
+                    width: gameArea.clientWidth,
+                    height: mapHeight,
+                    wireframes: false,
+                    background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+                }
+            });
 
-// ----- Ball management -----
-let balls = []; // { body, name, color, letter, finishedAt, id }
-let nextBallId = 1;
-const ballRadius = 18;
-const startXRange = [60, W-60];
-const startY = 60;
+            Render.run(render);
+            const runner = Matter.Runner.create();
+            Matter.Runner.run(runner, engine);
 
-function createBall(name, color){
-  const x = startXRange[0] + Math.random()*(startXRange[1]-startXRange[0]);
-  const body = Bodies.circle(x, startY + Math.random()*6, ballRadius, {
-    restitution: 0.3,
-    friction: 0.02,
-    frictionAir: 0.002,
-    density: 0.002,
-    label: 'ball',
-    render: { fillStyle: color }
-  });
-  body.customId = nextBallId++;
-  const b = { body, name, color, letter: letterOf(name), finishedAt: null, id: body.customId };
-  balls.push(b);
-  Composite.add(world, body);
-  return b;
-}
+            // Walls
+            const wallOptions = { isStatic: true, render: { fillStyle: '#34495e' } };
+            World.add(world, [
+                Bodies.rectangle(render.options.width / 2, -25, render.options.width, 50, wallOptions),
+                Bodies.rectangle(render.options.width / 2, mapHeight + 25, render.options.width, 50, wallOptions),
+                Bodies.rectangle(-25, mapHeight / 2, 50, mapHeight, wallOptions),
+                Bodies.rectangle(render.options.width + 25, mapHeight / 2, 50, mapHeight, wallOptions)
+            ]);
 
-function clearBalls(){
-  balls.forEach(b => Composite.remove(world, b.body));
-  balls = [];
-  nextBallId = 1;
-}
+            finishLine = mapHeight - 100;
+        }
 
-// ----- Leaderboard UI -----
-const leaderboardEl = document.getElementById('leaderboard');
-const activeCountEl = document.getElementById('activeCount');
-const roundInfoEl = document.getElementById('roundInfo');
-const timerEl = document.getElementById('timer');
-const modeLabelEl = document.getElementById('modeLabel');
+        function createMaze() {
+            const Bodies = Matter.Bodies;
+            const World = Matter.World;
+            const w = render.options.width;
 
-function updateLeaderboard(){
-  // Rank by distance to finish (higher y is closer to finish)
-  const active = balls.filter(b => b.finishedAt === null);
-  const ranked = [...balls].sort((a,b) => {
-    const ay = a.body.position.y;
-    const by = b.body.position.y;
-    // finished ones should be at top by finish time
-    if (a.finishedAt !== null && b.finishedAt === null) return -1;
-    if (b.finishedAt !== null && a.finishedAt === null) return 1;
-    if (a.finishedAt !== null && b.finishedAt !== null) return a.finishedAt - b.finishedAt;
-    return by - ay;
-  });
-  leaderboardEl.innerHTML = '';
-  ranked.forEach((b, idx) => {
-    const row = document.createElement('div');
-    row.className = 'nameRow';
-    const dot = document.createElement('div');
-    dot.className = 'colorDot';
-    dot.style.background = b.color;
-    dot.textContent = b.letter;
-    const label = document.createElement('div');
-    label.className = 'rankLabel';
-    const status = b.finishedAt ? `Finished (#${b.finishedAtRank || idx+1})` : `In race`;
-    label.innerHTML = `<div style="font-weight:800">${b.name}</div><div class="small">${status}</div>`;
-    row.appendChild(dot);
-    row.appendChild(label);
-    leaderboardEl.appendChild(row);
-  });
-  activeCountEl.textContent = active.length;
-}
+            // Large diagonal obstacles creating paths
+            const sections = 8;
+            for (let i = 1; i <= sections; i++) {
+                const y = (mapHeight / (sections + 1)) * i;
+                
+                // Large angled platforms creating funnels
+                const angle1 = Bodies.rectangle(w * 0.25, y, 200, 20, {
+                    isStatic: true,
+                    angle: 0.3,
+                    render: { fillStyle: '#e74c3c' }
+                });
+                
+                const angle2 = Bodies.rectangle(w * 0.75, y, 200, 20, {
+                    isStatic: true,
+                    angle: -0.3,
+                    render: { fillStyle: '#e74c3c' }
+                });
+                
+                World.add(world, [angle1, angle2]);
 
-// ----- Finish detection -----
-let finishOrder = []; // array of ball ids in order they crossed
-Events.on(engine, 'afterUpdate', function(){
-  balls.forEach(b => {
-    if (b.finishedAt === null && b.body.position.y >= finishY - 10) {
-      b.finishedAt = performance.now();
-      finishOrder.push(b);
-      b.finishedAtRank = finishOrder.length;
-      // make ball static at finish area to avoid bouncing out
-      Body.setVelocity(b.body, { x:0, y:0 });
-      Body.setStatic(b.body, true);
-    }
-  });
-  updateLeaderboard();
-});
+                // Large rotating crosses
+                if (i % 2 === 0) {
+                    const cross1 = Bodies.rectangle(w * 0.5, y + 100, 180, 15, {
+                        isStatic: true,
+                        render: { fillStyle: '#3498db' }
+                    });
+                    
+                    World.add(world, cross1);
+                    
+                    let angle = 0;
+                    setInterval(() => {
+                        if (!isRacing) return;
+                        angle += 0.03;
+                        Matter.Body.setAngle(cross1, angle);
+                    }, 16);
+                }
 
-// ----- Drawing letters on balls -----
-(function patchRender(){
-  const original = render.context;
-  // We'll draw letters after the engine renders
-  Events.on(render, 'afterRender', function(){
-    const ctx = render.context;
-    balls.forEach(b => {
-      const pos = b.body.position;
-      ctx.beginPath();
-      ctx.fillStyle = b.color;
-      ctx.arc(pos.x, pos.y, ballRadius, 0, Math.PI*2);
-      ctx.fill();
-      // outline
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-      ctx.stroke();
-      // letter
-      ctx.fillStyle = '#021';
-      ctx.font = `${ballRadius}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(b.letter, pos.x, pos.y+1);
-    });
-    // draw start/finish labels
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fillRect(0, finishY, render.options.width, 4);
-  });
-})();
+                // Moving bumpers
+                if (i % 3 === 1) {
+                    const bumper = Bodies.rectangle(w / 2, y + 150, 100, 30, {
+                        isStatic: true,
+                        render: { fillStyle: '#e67e22' },
+                        chamfer: { radius: 15 }
+                    });
+                    
+                    World.add(world, bumper);
+                    
+                    let startX = w / 2;
+                    setInterval(() => {
+                        if (!isRacing) return;
+                        Matter.Body.setPosition(bumper, {
+                            x: startX + Math.sin(Date.now() / 800) * 150,
+                            y: bumper.position.y
+                        });
+                    }, 16);
+                }
 
-// ----- Controls and game flow -----
-const namesInput = document.getElementById('namesInput');
-const startBtn = document.getElementById('startBtn');
-const continueBtn = document.getElementById('continueBtn');
-const removeWinnerBtn = document.getElementById('removeWinnerBtn');
-const resetBtn = document.getElementById('resetBtn');
-const modeSelect = document.getElementById('modeSelect');
+                // Large V-shaped funnels
+                if (i % 4 === 0) {
+                    const funnelLeft = Bodies.rectangle(w * 0.3, y + 200, 150, 20, {
+                        isStatic: true,
+                        angle: 0.5,
+                        render: { fillStyle: '#9b59b6' }
+                    });
+                    
+                    const funnelRight = Bodies.rectangle(w * 0.7, y + 200, 150, 20, {
+                        isStatic: true,
+                        angle: -0.5,
+                        render: { fillStyle: '#9b59b6' }
+                    });
+                    
+                    World.add(world, [funnelLeft, funnelRight]);
+                }
 
-let originalNames = [];
-let activeNames = [];
-let round = 0;
-let roundStartTime = null;
-let roundTimerInterval = null;
-let mode = 'remove'; // or 'elimination'
-let roundInProgress = false;
+                // Spinning wheels
+                if (i % 5 === 2) {
+                    const wheel = Bodies.circle(w * 0.5, y + 250, 60, {
+                        isStatic: true,
+                        render: { 
+                            fillStyle: '#1abc9c',
+                            strokeStyle: '#16a085',
+                            lineWidth: 8
+                        }
+                    });
+                    
+                    // Add spokes
+                    for (let j = 0; j < 4; j++) {
+                        const spoke = Bodies.rectangle(w * 0.5, y + 250, 100, 8, {
+                            isStatic: true,
+                            render: { fillStyle: '#16a085' }
+                        });
+                        Matter.Body.setPosition(spoke, { x: w * 0.5, y: y + 250 });
+                        World.add(world, spoke);
+                        
+                        setInterval(() => {
+                            if (!isRacing) return;
+                            Matter.Body.rotate(spoke, 0.05);
+                        }, 16);
+                    }
+                    
+                    World.add(world, wheel);
+                }
 
-function assignColorsToNames(names){
-  return names.map((n,i) => ({ name: n.trim(), color: pickColor(i) }));
-}
+                // Large slanted platforms creating tight passages
+                if (i % 3 === 0) {
+                    World.add(world, [
+                        Bodies.rectangle(w * 0.2, y + 300, 180, 25, {
+                            isStatic: true,
+                            angle: 0.4,
+                            render: { fillStyle: '#f39c12' }
+                        }),
+                        Bodies.rectangle(w * 0.8, y + 350, 180, 25, {
+                            isStatic: true,
+                            angle: -0.4,
+                            render: { fillStyle: '#f39c12' }
+                        })
+                    ]);
+                }
+            }
 
-function startRaceFromNames(namesArr){
-  // clear previous balls and finish order
-  clearBalls();
-  finishOrder = [];
-  round++;
-  roundStartTime = performance.now();
-  roundInProgress = true;
-  roundInfoEl.textContent = `Round ${round}`;
-  // create balls
-  namesArr.forEach((n,i) => {
-    const color = pickColor(i);
-    createBall(n, color);
-  });
-  // ensure pegs are present; if not, regenerate
-  updateLeaderboard();
-  startRoundTimer();
-}
+            // Finish line
+            World.add(world, Bodies.rectangle(w / 2, finishLine, w - 100, 30, {
+                isStatic: true,
+                isSensor: true,
+                render: { fillStyle: '#27ae60', opacity: 0.8 }
+            }));
 
-function startRoundTimer(){
-  if (roundTimerInterval) clearInterval(roundTimerInterval);
-  roundTimerInterval = setInterval(() => {
-    const elapsed = (performance.now() - roundStartTime)/1000;
-    timerEl.textContent = formatTime(elapsed);
-    // If round is taking too long, slightly increase gravity to finish within target
-    if (elapsed > 70 && engine.gravity.y < 1.6) engine.gravity.y += 0.02;
-    // If round is too short, reduce gravity for next rounds
-  }, 500);
-}
+            // Anti-stick zones - invisible sensors that give balls a nudge if they're stuck
+            setInterval(() => {
+                if (!isRacing) return;
+                balls.forEach(ball => {
+                    if (Math.abs(ball.velocity.x) < 0.1 && Math.abs(ball.velocity.y) < 0.1) {
+                        Matter.Body.applyForce(ball, ball.position, {
+                            x: (Math.random() - 0.5) * 0.01,
+                            y: 0.005
+                        });
+                    }
+                });
+            }, 500);
+        }
 
-function stopRoundTimer(){
-  if (roundTimerInterval) clearInterval(roundTimerInterval);
-  roundTimerInterval = null;
-  timerEl.textContent = '00:00';
-}
+        function createBalls() {
+            const Bodies = Matter.Bodies;
+            const World = Matter.World;
+            const startY = 50;
+            const spacing = render.options.width / (players.length + 1);
 
-function beginGame(){
-  // parse names
-  const raw = namesInput.value.split('\n').map(s => s.trim()).filter(Boolean);
-  if (raw.length < 1) {
-    alert('Please enter at least one name.');
-    return;
-  }
-  originalNames = raw.slice();
-  activeNames = raw.slice();
-  round = 0;
-  mode = modeSelect.value;
-  modeLabelEl.textContent = mode === 'remove' ? 'Remove Winner' : 'Elimination';
-  // regenerate pegs for variety
-  Composite.remove(world, pegs);
-  pegs = generatePegs(22, 12);
-  Composite.add(world, pegs);
-  // reset gravity
-  engine.gravity.y = 1.05;
-  startRaceFromNames(activeNames);
-}
+            players.forEach((player, i) => {
+                const ball = Bodies.circle(spacing * (i + 1), startY, 22, {
+                    restitution: 0.7,
+                    friction: 0.005,
+                    frictionAir: 0.001,
+                    density: 0.05,
+                    render: {
+                        fillStyle: player.color,
+                        strokeStyle: '#fff',
+                        lineWidth: 0
+                    }
+                });
+                
+                ball.playerIndex = i;
+                ball.finished = false;
+                balls.push(ball);
+                World.add(world, ball);
+            });
 
-startBtn.addEventListener('click', () => {
-  beginGame();
-});
+            // Draw 3D balls
+            Matter.Events.on(render, 'afterRender', function() {
+                const ctx = render.context;
+                
+                balls.forEach(ball => {
+                    const player = players[ball.playerIndex];
+                    const x = ball.position.x;
+                    const y = ball.position.y;
+                    const r = 22;
+                    
+                    // Shadow
+                    ctx.beginPath();
+                    ctx.arc(x + 2, y + 2, r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.fill();
+                    
+                    // Main sphere with gradient
+                    const gradient = ctx.createRadialGradient(x - r/3, y - r/3, 0, x, y, r);
+                    gradient.addColorStop(0, lightenColor(player.color, 40));
+                    gradient.addColorStop(0.7, player.color);
+                    gradient.addColorStop(1, darkenColor(player.color, 20));
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    
+                    // Highlight
+                    const highlight = ctx.createRadialGradient(x - r/2, y - r/2, 0, x - r/2, y - r/2, r/2);
+                    highlight.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+                    highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = highlight;
+                    ctx.fill();
+                    
+                    // Initial
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(player.initial, x, y);
+                    ctx.shadowBlur = 0;
+                });
+            });
 
-// Continue (start next round with current active names)
-continueBtn.addEventListener('click', () => {
-  if (activeNames.length <= 1) {
-    alert('Not enough players to continue.');
-    return;
-  }
-  // regenerate pegs and reset world positions of balls
-  Composite.remove(world, pegs);
-  pegs = generatePegs(22, 12);
-  Composite.add(world, pegs);
-  engine.gravity.y = 1.05;
-  startRaceFromNames(activeNames);
-});
+            // Check for finish
+            Matter.Events.on(engine, 'afterUpdate', checkFinish);
+        }
 
-// Remove winner manually
-removeWinnerBtn.addEventListener('click', () => {
-  if (finishOrder.length === 0) {
-    alert('No winner yet. Wait until someone finishes.');
-    return;
-  }
-  const winner = finishOrder[0];
-  if (!winner) return;
-  // remove winner from activeNames
-  activeNames = activeNames.filter(n => n !== winner.name);
-  // remove winner ball from world
-  Composite.remove(world, winner.body);
-  balls = balls.filter(b => b !== winner);
-  finishOrder = finishOrder.slice(1);
-  updateLeaderboard();
-  if (activeNames.length <= 1) {
-    stopRoundTimer();
-    roundInProgress = false;
-    alert(`Winner removed. Final winner: ${activeNames[0] || 'None'}`);
-  } else {
-    // continue with remaining players
-    alert(`${winner.name} removed. ${activeNames.length} players remain.`);
-  }
-});
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const r = Math.min(255, ((num >> 16) + percent));
+            const g = Math.min(255, (((num >> 8) & 0x00FF) + percent));
+            const b = Math.min(255, ((num & 0x0000FF) + percent));
+            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+        }
 
-// Reset everything
-resetBtn.addEventListener('click', () => {
-  if (!confirm('Reset the game and clear names?')) return;
-  clearBalls();
-  Composite.remove(world, pegs);
-  pegs = generatePegs(22, 12);
-  Composite.add(world, pegs);
-  namesInput.value = '';
-  originalNames = [];
-  activeNames = [];
-  round = 0;
-  finishOrder = [];
-  stopRoundTimer();
-  updateLeaderboard();
-});
+        function darkenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const r = Math.max(0, ((num >> 16) - percent));
+            const g = Math.max(0, (((num >> 8) & 0x00FF) - percent));
+            const b = Math.max(0, ((num & 0x0000FF) - percent));
+            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+        }
 
-// Automatic elimination logic: when all balls finished, handle according to mode
-Events.on(engine, 'afterUpdate', function(){
-  if (!roundInProgress) return;
-  // if all balls finished
-  const unfinished = balls.filter(b => b.finishedAt === null);
-  if (unfinished.length === 0 && balls.length > 0) {
-    roundInProgress = false;
-    stopRoundTimer();
-    // finishOrder contains balls in order of crossing
-    // assign ranks
-    finishOrder.forEach((b, idx) => b.finishedAtRank = idx+1);
-    updateLeaderboard();
-    if (mode === 'remove') {
-      // do nothing automatic; user can press Remove Winner to continue
-      alert(`Round ${round} finished. Winner: ${finishOrder[0].name}. Press "Remove Winner" to remove and continue.`);
-    } else if (mode === 'elimination') {
-      // eliminate last finisher
-      const last = finishOrder[finishOrder.length - 1];
-      if (last) {
-        alert(`Round ${round} finished. Eliminated: ${last.name}`);
-        // remove from activeNames
-        activeNames = activeNames.filter(n => n !== last.name);
-      }
-      // if more than one remains, restart automatically after short delay
-      if (activeNames.length > 1) {
-        setTimeout(() => {
-          // regenerate pegs for next round
-          Composite.remove(world, pegs);
-          pegs = generatePegs(22, 12);
-          Composite.add(world, pegs);
-          engine.gravity.y = 1.05;
-          startRaceFromNames(activeNames);
-        }, 1200);
-      } else {
-        alert(`Final winner: ${activeNames[0] || 'None'}`);
-      }
-    }
-  }
-});
+        function setupAutoScroll() {
+            setInterval(() => {
+                if (!isRacing || balls.length === 0) return;
+                
+                // Find the average position of all balls
+                const avgY = balls.reduce((sum, ball) => sum + ball.position.y, 0) / balls.length;
+                
+                // Scroll to keep balls in view
+                const scrollTarget = Math.max(0, avgY - 300);
+                gameCanvas.scrollTop = scrollTarget;
+            }, 50);
+        }
 
-// Keep canvas responsive on resize
-window.addEventListener('resize', () => {
-  const newW = canvasWrap.clientWidth;
-  const newH = canvasWrap.clientHeight;
-  render.canvas.width = newW;
-  render.canvas.height = newH;
-  render.options.width = newW;
-  render.options.height = newH;
-});
+        function checkFinish() {
+            if (!isRacing) return;
 
-// initial UI update
-updateLeaderboard();
-</script>
+            balls.forEach(ball => {
+                if (!ball.finished && ball.position.y >= finishLine) {
+                    ball.finished = true;
+                    const player = players[ball.playerIndex];
+                    
+                    if (gameMode === 'winner') {
+                        isRacing = false;
+                        showWinnerModal(player);
+                    } else {
+                        const finishedCount = balls.filter(b => b.finished).length;
+                        if (finishedCount === balls.length) {
+                            eliminatedPlayers.push(player);
+                            isRacing = false;
+                            showEliminationModal(player);
+                        }
+                    }
+                }
+            });
+
+            updateLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            
+            const sortedPlayers = players.map((p, i) => ({
+                player: p,
+                ball: balls[i],
+                progress: balls[i] ? ((balls[i].position.y / finishLine) * 100).toFixed(0) : 0,
+                finished: balls[i] ? balls[i].finished : false,
+                eliminated: eliminatedPlayers.includes(p)
+            })).sort((a, b) => (b.ball?.position.y || 0) - (a.ball?.position.y || 0));
+
+            list.innerHTML = sortedPlayers.map((item, rank) => `
+                <div class="leaderboard-item ${item.finished ? 'winner' : ''} ${item.eliminated ? 'eliminated' : ''}">
+                    <span class="rank">#${rank + 1}</span>
+                    <div class="color-dot" style="background: ${item.player.color}"></div>
+                    <span class="player-name">${item.player.name}</span>
+                    <span class="progress">${item.finished ? '✓' : item.progress + '%'}</span>
+                </div>
+            `).join('');
+        }
+
+        function showWinnerModal(winner) {
+            const modal = document.getElementById('winnerModal');
+            document.getElementById('winnerName').textContent = winner.name;
+            document.getElementById('winnerName').style.color = winner.color;
+            
+            document.getElementById('modalButtons').innerHTML = `
+                <button class="modal-btn continue" onclick="continueWithoutWinner()">Continue Without Winner</button>
+                <button class="modal-btn restart" onclick="location.reload()">New Game</button>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function showEliminationModal(eliminated) {
+            const modal = document.getElementById('winnerModal');
+            document.getElementById('winnerName').textContent = eliminated.name + ' Eliminated!';
+            document.getElementById('winnerName').style.color = eliminated.color;
+            
+            const remaining = players.filter(p => !eliminatedPlayers.includes(p));
+            
+            if (remaining.length === 1) {
+                document.querySelector('#winnerModal h2').textContent = '🎉 Final Winner! 🎉';
+                document.getElementById('winnerName').textContent = remaining[0].name;
+                document.getElementById('winnerName').style.color = remaining[0].color;
+                document.getElementById('modalButtons').innerHTML = `
+                    <button class="modal-btn restart" onclick="location.reload()">New Game</button>
+                `;
+            } else {
+                document.getElementById('modalButtons').innerHTML = `
+                    <button class="modal-btn continue" onclick="continueElimination()">Continue (${remaining.length} left)</button>
+                    <button class="modal-btn restart" onclick="location.reload()">New Game</button>
+                `;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function continueWithoutWinner() {
+            document.getElementById('winnerModal').style.display = 'none';
+            
+            const winnerBall = balls.find(b => b.finished);
+            if (winnerBall) {
+                const winnerIndex = winnerBall.playerIndex;
+                Matter.World.remove(world, winnerBall);
+                balls = balls.filter(b => b !== winnerBall);
+                players = players.filter((p, i) => i !== winnerIndex);
+                
+                balls.forEach(b => {
+                    if (b.playerIndex > winnerIndex) b.playerIndex--;
+                });
+            }
+            
+            resetRace();
+        }
+
+        function continueElimination() {
+            document.getElementById('winnerModal').style.display = 'none';
+            
+            const lastPlayer = eliminatedPlayers[eliminatedPlayers.length - 1];
+            const eliminatedIndex = players.indexOf(lastPlayer);
+            const eliminatedBall = balls[eliminatedIndex];
+            
+            Matter.World.remove(world, eliminatedBall);
+            balls = balls.filter(b => b !== eliminatedBall);
+            players = players.filter(p => p !== lastPlayer);
+            
+            balls.forEach(b => {
+                if (b.playerIndex > eliminatedIndex) b.playerIndex--;
+            });
+            
+            resetRace();
+        }
+
+        function resetRace() {
+            const startY = 50;
+            const spacing = render.options.width / (balls.length + 1);
+            
+            balls.forEach((ball, i) => {
+                Matter.Body.setPosition(ball, { x: spacing * (i + 1), y: startY });
+                Matter.Body.setVelocity(ball, { x: 0, y: 0 });
+                Matter.Body.setAngularVelocity(ball, 0);
+                ball.finished = false;
+            });
+            
+            gameCanvas.scrollTop = 0;
+            isRacing = true;
+            updateLeaderboard();
+        }
+    </script>
 </body>
 </html>
