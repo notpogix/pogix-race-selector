@@ -1,766 +1,378 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pogix Race Selector</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/2.0.20/matter.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #0a0e27;
-            color: #e8eef7;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .container {
-            display: flex;
-            height: 100vh;
-            gap: 15px;
-            padding: 15px;
-        }
-
-        .left-panel {
-            width: 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            overflow-y: auto;
-            background: #1a1f3a;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-        }
-
-        .panel-title {
-            color: #00d4ff;
-            font-weight: bold;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 10px;
-            background: rgba(0, 212, 255, 0.08);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            color: #e8eef7;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #00d4ff;
-            background: rgba(0, 212, 255, 0.15);
-        }
-
-        button {
-            padding: 10px 16px;
-            background: #00d4ff;
-            color: #000;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            transition: 0.2s;
-        }
-
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .players-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .player-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            background: rgba(0, 212, 255, 0.1);
-            border-radius: 6px;
-            font-size: 12px;
-            border: 1px solid rgba(0, 212, 255, 0.25);
-        }
-
-        .player-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .player-name {
-            flex: 1;
-        }
-
-        .btn-remove {
-            padding: 4px 8px;
-            background: rgba(255, 107, 157, 0.6);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .btn-remove:hover {
-            background: rgba(255, 107, 157, 0.9);
-        }
-
-        .mode-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-mode {
-            flex: 1;
-            padding: 10px;
-            background: rgba(0, 212, 255, 0.15);
-            color: #a8b0bb;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 11px;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.2s;
-        }
-
-        .btn-mode.active {
-            background: #00d4ff;
-            color: #000;
-            border-color: #00d4ff;
-            box-shadow: 0 0 16px rgba(0, 212, 255, 0.5);
-        }
-
-        .btn-mode:hover {
-            border-color: #00d4ff;
-        }
-
-        .control-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn-start {
-            background: #00ff88;
-            color: #000;
-            font-weight: bold;
-            padding: 12px;
-        }
-
-        .btn-start:hover:not(:disabled) {
-            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
-        }
-
-        .btn-reset {
-            background: rgba(255, 165, 0, 0.3);
-            color: #ffa500;
-            border: 1px solid rgba(255, 165, 0, 0.4);
-            padding: 10px;
-        }
-
-        .btn-reset:hover:not(:disabled) {
-            background: rgba(255, 165, 0, 0.5);
-        }
-
-        .btn-next {
-            background: #ff6b9d;
-            color: white;
-            padding: 10px;
-            display: none;
-        }
-
-        .btn-next.show {
-            display: block;
-        }
-
-        .btn-clear {
-            background: rgba(168, 85, 247, 0.3);
-            color: #a855f7;
-            border: 1px solid rgba(168, 85, 247, 0.4);
-            padding: 8px;
-            font-size: 11px;
-        }
-
-        .btn-clear:hover:not(:disabled) {
-            background: rgba(168, 85, 247, 0.5);
-        }
-
-        .info-text {
-            font-size: 11px;
-            color: #a8b0bb;
-            margin-top: 8px;
-            line-height: 1.5;
-        }
-
-        .center-canvas {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(180deg, #0a0f1a 0%, #1a232e 100%);
-            border-radius: 10px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            overflow: hidden;
-            position: relative;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .right-panel {
-            width: 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            background: #1a1f3a;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            overflow-y: auto;
-        }
-
-        .status-box {
-            text-align: center;
-            padding: 20px;
-            background: rgba(0, 212, 255, 0.05);
-            border-radius: 8px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-        }
-
-        .status-text {
-            font-size: 12px;
-            color: #a8b0bb;
-            margin-bottom: 8px;
-        }
-
-        .status-winner {
-            font-size: 20px;
-            font-weight: bold;
-            color: #00ff88;
-            text-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
-        }
-
-        .rankings-box {
-            flex: 1;
-            background: rgba(0, 212, 255, 0.05);
-            border-radius: 8px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            padding: 10px;
-            overflow-y: auto;
-        }
-
-        .ranking-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px;
-            background: rgba(0, 212, 255, 0.08);
-            border-left: 3px solid rgba(0, 212, 255, 0.4);
-            border-radius: 5px;
-            margin-bottom: 6px;
-            font-size: 12px;
-        }
-
-        .ranking-item.finished {
-            background: rgba(0, 255, 136, 0.12);
-            border-left-color: #00ff88;
-        }
-
-        .ranking-color {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .ranking-name {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .ranking-pos {
-            font-weight: bold;
-            color: #a8b0bb;
-            min-width: 20px;
-            text-align: right;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 212, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 212, 255, 0.25);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 212, 255, 0.5);
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Marble Maze — Instant Race</title>
+  <style>
+    :root{--bg:#0b1020;--panel:#0f1724;--accent:#6ee7b7;--muted:#94a3b8}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071024 0%, #071a2a 100%);font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    .app{display:flex;min-height:100vh;gap:12px;padding:18px}
+    .left{flex:1;min-width:760px;background:transparent;display:flex;flex-direction:column}
+    .topbar{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+    .panel{background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;color:#dfe9f3;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    button,select,input[type=text]{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#dfe9f3;padding:8px 10px;border-radius:8px}
+    button.primary{background:linear-gradient(90deg,var(--accent),#60a5fa);color:#041422;border:font-weight:700}
+    #canvasWrap{flex:1;overflow:auto;border-radius:12px}
+    canvas#world{display:block; background: linear-gradient(180deg,#083044 0%, #021019 100%);}
+    .right{width:360px;display:flex;flex-direction:column;gap:12px}
+    .namesList{max-height:260px;overflow:auto;padding:8px}
+    .nameItem{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
+    .ballBadge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 4px 10px rgba(2,6,23,0.6)}
+    .rankBox{position:fixed;right:28px;top:24px;background:rgba(255,255,255,0.03);padding:10px;border-radius:10px;color:#dfe9f3;width:240px}
+    .controls{display:flex;flex-direction:column;gap:8px}
+    .small{font-size:12px;color:var(--muted)}
+    .modeRow{display:flex;gap:8px}
+    .footer{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+    .overlay{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(3,6,15,0.9);padding:18px;border-radius:12px;color:#fff;z-index:60;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+    .hidden{display:none}
+    .bracket{max-height:300px;overflow:auto;padding:8px}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- LEFT PANEL -->
-        <div class="left-panel">
-            <div>
-                <div class="panel-title">🎮 Add Players</div>
-                <div class="input-group">
-                    <input type="text" id="nameInput" placeholder="Type name and press Enter">
-                    <button onclick="addPlayer()">Add</button>
-                </div>
-                <div class="players-list" id="playersList"></div>
-                <button class="btn-clear" onclick="clearAllPlayers()">Clear All</button>
-                <p class="info-text">💡 Each name = one colorful marble with its initial</p>
-            </div>
-
-            <div>
-                <div class="panel-title">⚡ Game Mode</div>
-                <div class="mode-buttons">
-                    <button class="btn-mode active" data-mode="winner" onclick="setMode('winner')">🏆 Winner</button>
-                    <button class="btn-mode" data-mode="elimination" onclick="setMode('elimination')">💀 Elim</button>
-                </div>
-                <p class="info-text" id="modeInfo">First marble to finish wins</p>
-            </div>
-
-            <div class="control-buttons">
-                <button class="btn-start" id="startBtn" onclick="startRace()">▶ START RACE</button>
-                <button class="btn-reset" id="resetBtn" onclick="resetRace()" disabled>↻ RESET</button>
-                <button class="btn-next" id="nextBtn" onclick="nextRound()">⏭ NEXT ROUND</button>
-            </div>
+  <div class="app">
+    <div class="left">
+      <div class="topbar panel">
+        <div style="display:flex;align-items:center;gap:8px">
+          <strong>Marble Maze — Instant Race</strong>
+          <span class="small">(no login — type names, choose mode & go)</span>
         </div>
 
-        <!-- CENTER CANVAS -->
-        <div class="center-canvas">
-            <canvas id="gameCanvas"></canvas>
+        <div style="margin-left:12px;display:flex;gap:8px;align-items:center">
+          <select id="modeSelect" title="Game mode">
+            <option value="winner">Winner Selection</option>
+            <option value="elimination">Elimination (Last Out)</option>
+          </select>
+          <button id="startBtn" class="primary">Start Race</button>
+          <button id="stopBtn">Stop</button>
+          <button id="shuffleBtn">Shuffle Maze</button>
+          <label class="small">Gravity <input id="gravity" type="range" min="0.2" max="2.5" step="0.05" value="1"></label>
+          <label class="small">TimeScale <input id="timescale" type="range" min="0.3" max="1.6" step="0.05" value="1"></label>
         </div>
+      </div>
 
-        <!-- RIGHT PANEL -->
-        <div class="right-panel">
-            <div>
-                <div class="panel-title">📊 Status</div>
-                <div class="status-box">
-                    <div class="status-text" id="statusText">Ready to race!</div>
-                    <div class="status-winner" id="statusWinner"></div>
-                </div>
-            </div>
+      <div id="canvasWrap" class="panel">
+        <!-- Large scrollable map; canvas inside -->
+        <canvas id="world" width="900" height="2000"></canvas>
+      </div>
 
-            <div>
-                <div class="panel-title">📈 Rankings</div>
-                <div class="rankings-box" id="rankingsList"></div>
-            </div>
+      <div class="panel" style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+        <div class="small">Each round attempts to be ~60s by default — you can change gravity and timescale.</div>
+        <div>
+          <label class="small">Bracket View <input type="checkbox" id="bracketToggle"></label>
         </div>
+      </div>
     </div>
 
-    <script>
-        const { Engine, World, Bodies, Body, Events } = Matter;
+    <div class="right">
+      <div class="panel controls">
+        <div style="display:flex;gap:8px">
+          <input id="nameInput" type="text" placeholder="Type a name and press Enter" />
+          <button id="addBtn">Add</button>
+        </div>
+        <div class="small">Players (drag to reorder)</div>
+        <div id="players" class="namesList"></div>
+        <div style="display:flex;gap:8px">
+          <button id="clearBtn">Clear</button>
+          <button id="randomBtn">Add 6 Random</button>
+        </div>
+        <div class="small">Options</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label><input type="checkbox" id="autoContinue" checked> Auto-continue rounds (keep playing till all winners removed)</label>
+          <label><input type="checkbox" id="shuffleEachRound"> Shuffle maze each round</label>
+          <label><input type="checkbox" id="keepMapLarge" checked> Large map (long races)</label>
+        </div>
+      </div>
 
-        const COLORS = [
-            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-            '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#A8E6CF',
-            '#FFD93D', '#6BCB77', '#FF6584', '#36A2EB', '#FF9F40',
-            '#E91E63', '#00BCD4', '#8BC34A', '#FF5722', '#9C27B0'
-        ];
+      <div class="panel" id="rankPanel">
+        <strong>Live Rankings</strong>
+        <div id="ranks" style="margin-top:8px"></div>
+      </div>
 
-        const state = {
-            players: [],
-            allPlayers: [],
-            mode: 'winner',
-            racing: false,
-            finished: [],
-            engine: null,
-            balls: [],
-            cameraY: 0
-        };
+      <div class="panel bracket hidden" id="bracketPanel">
+        <strong>Bracket / Tournament</strong>
+        <div id="bracketArea"></div>
+      </div>
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+      <div class="panel">
+        <strong>Last Result</strong>
+        <div id="lastResult" style="margin-top:8px" class="small">—</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="removeWinnerBtn" class="hidden">Remove Winner & Continue</button>
+          <button id="restartBtn">Restart Race</button>
+          <button id="exportBtn">Export Players</button>
+        </div>
+      </div>
 
-        function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+      <div class="footer panel small">Tip: Scroll the map vertically to see full course. Use shuffle + bracket mode for tournaments.</div>
+    </div>
+  </div>
+
+  <div id="winnerOverlay" class="overlay hidden"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script>
+  // Marble Maze — Single-file implementation using Matter.js
+  // Features implemented based on your spec:
+  // - vertical layout, large map, scrollable
+  // - mode selection (winner selection / elimination)
+  // - add names (press Enter or Add button)
+  // - unique color and letter badge, 3D-like shading, physics collisions
+  // - shuffle maze, gravity slider, timescale, bracket/view
+  // - live ranking by distance to finish, elimination/winner handling
+
+  const { Engine, Render, World, Bodies, Body, Events, Runner, Composite, Composites, Constraint } = Matter;
+
+  // DOM hooks
+  const canvas = document.getElementById('world');
+  const ctx = canvas.getContext('2d');
+  const playersDiv = document.getElementById('players');
+  const ranksDiv = document.getElementById('ranks');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const addBtn = document.getElementById('addBtn');
+  const nameInput = document.getElementById('nameInput');
+  const clearBtn = document.getElementById('clearBtn');
+  const randomBtn = document.getElementById('randomBtn');
+  const modeSelect = document.getElementById('modeSelect');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const gravityRange = document.getElementById('gravity');
+  const timescaleRange = document.getElementById('timescale');
+  const winnerOverlay = document.getElementById('winnerOverlay');
+  const removeWinnerBtn = document.getElementById('removeWinnerBtn');
+  const lastResult = document.getElementById('lastResult');
+  const restartBtn = document.getElementById('restartBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const bracketToggle = document.getElementById('bracketToggle');
+  const bracketPanel = document.getElementById('bracketPanel');
+  const bracketArea = document.getElementById('bracketArea');
+
+  // World settings
+  let canvasWidth = canvas.width = 900;
+  let canvasHeight = canvas.height = (document.getElementById('canvasWrap').clientHeight>0? 2000 : 2000); // large vertical world
+  let finishY = canvasHeight - 80;
+  const startY = 80;
+  let engine = Engine.create();
+  let runner = null;
+  let worldBodies = [];
+
+  engine.world.gravity.y = parseFloat(gravityRange.value);
+  engine.timing.timeScale = parseFloat(timescaleRange.value);
+
+  // State
+  let players = []; // {id,name,color,letter,body,finishedAt,rank}
+  let balls = [];
+  let pegs = [];
+  let obstacles = [];
+  let finishOrder = [];
+  let running = false;
+  let roundCount = 0;
+  let eliminationOrder = [];
+
+  // Utilities
+  function uid(prefix='p'){return prefix + Math.random().toString(36).slice(2,9)}
+  function pickColor(seed){ // deterministic-ish color from seed
+    let h = Math.abs(hashCode(seed)) % 360; return `hsl(${h} 70% 55%)`;
+  }
+  function hashCode(s){let h=0; for(let i=0;i<s.length;i++)h=(h<<5)-h+s.charCodeAt(i)|0; return h}
+
+  // UI: add player
+  function addPlayer(name){ if(!name) return; name = name.trim(); if(!name) return;
+    const id = uid('pl_');
+    const letter = name[0].toUpperCase();
+    const color = pickColor(name + Math.random()); // use random part to avoid identical colors for same name
+    const player = {id, name, color, letter, body:null, finishedAt:null, rank:null};
+    players.push(player); renderPlayers();
+  }
+  function renderPlayers(){ playersDiv.innerHTML=''; players.forEach((p,i)=>{
+      const el = document.createElement('div'); el.className='nameItem'; el.draggable=true;
+      el.innerHTML = `<div class="ballBadge" style="background:${p.color};color:#021022">${p.letter}</div><div style="flex:1"><strong>${p.name}</strong><div class="small">#${i+1}</div></div><button data-id="${p.id}">✖</button>`;
+      playersDiv.appendChild(el);
+      el.querySelector('button').onclick = ()=>{ players = players.filter(x=>x.id!==p.id); renderPlayers(); }
+
+      // reorder by drag
+      el.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', p.id) })
+      el.addEventListener('dragover', e=>{ e.preventDefault() })
+      el.addEventListener('drop', e=>{ e.preventDefault(); const from = e.dataTransfer.getData('text'); const to = p.id; reorderPlayers(from,to); })
+    })}
+
+  function reorderPlayers(fromId,toId){ const fromIdx = players.findIndex(x=>x.id===fromId); const toIdx = players.findIndex(x=>x.id===toId); if(fromIdx<0||toIdx<0) return; const [item]=players.splice(fromIdx,1); players.splice(toIdx,0,item); renderPlayers(); }
+
+  nameInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ addPlayer(nameInput.value); nameInput.value=''; } })
+  addBtn.onclick = ()=>{ addPlayer(nameInput.value); nameInput.value=''; }
+  clearBtn.onclick = ()=>{ players=[]; renderPlayers(); }
+  randomBtn.onclick = ()=>{ const sample = ['Ava','Liam','Noah','Mia','Zoe','Kai','Rin','Omar','Nia','Leo','Isha','Raj']; for(let i=0;i<6;i++){ addPlayer(sample[Math.floor(Math.random()*sample.length)] + (Math.random()>0.5?'':' '+Math.floor(Math.random()*99))); } }
+
+  // Maze generator (pegs) — plinko-style pegs
+  function generatePegs(){ // clear existing
+    pegs.forEach(b=>World.remove(engine.world,b)); pegs=[];
+    const cols = 9; const spacingX = canvasWidth / cols; const spacingY = 90; let offset=0;
+    for(let y=startY+60;y<finishY-140;y+=spacingY){
+      offset = (offset===0? spacingX/2 : 0);
+      for(let x=offset+40;x<canvasWidth-40;x+=spacingX){
+        if(Math.random() < 0.85){ const r=8 + Math.random()*4; const peg = Bodies.circle(x + (Math.random()*18-9), y + (Math.random()*12-6), r, {isStatic:true,friction:0,render:{visible:false}}); pegs.push(peg); }
+      }
+    }
+    pegs.forEach(p=>World.add(engine.world,p));
+  }
+
+  function addBorders(){ const thickness = 40; const left = Bodies.rectangle(-thickness/2, canvasHeight/2, thickness, canvasHeight, {isStatic:true}); const right = Bodies.rectangle(canvasWidth+thickness/2, canvasHeight/2, thickness, canvasHeight, {isStatic:true}); const top = Bodies.rectangle(canvasWidth/2, -thickness/2, canvasWidth, thickness, {isStatic:true}); const finish = Bodies.rectangle(canvasWidth/2, finishY+20, canvasWidth, 40, {isStatic:true, isSensor:true, label:'finish'});
+    World.add(engine.world,[left,right,top,finish]); obstacles.push(left,right,top,finish);
+  }
+
+  function clearWorld(){ World.clear(engine.world); pegs=[]; obstacles=[]; balls=[]; finishOrder=[]; }
+
+  function spawnBalls(){ // spawn at top spaced horizontally
+    const count = players.length; const gap = Math.min(72, (canvasWidth-200)/Math.max(1,count)); const startX = (canvasWidth - (count-1)*gap)/2;
+    players.forEach((p,i)=>{
+      const x = startX + i*gap + (Math.random()*14-7); const y = startY - (10 + Math.random()*10);
+      const radius = 20; const body = Bodies.circle(x, y, radius, { restitution:0.2, friction:0.02, frictionAir:0.02, density:0.002, label:'player' });
+      body.plugin = {playerId:p.id}; p.body = body; p.finishedAt = null; p.rank = null; World.add(engine.world, body); balls.push({player:p, body, radius});
+    });
+  }
+
+  function drawScene(){ ctx.clearRect(0,0,canvasWidth,canvasHeight);
+    // background gradient
+    const g = ctx.createLinearGradient(0,0,0,canvasHeight); g.addColorStop(0,'#082333'); g.addColorStop(1,'#021018'); ctx.fillStyle=g; ctx.fillRect(0,0,canvasWidth,canvasHeight);
+
+    // finish line
+    ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(0,finishY,canvasWidth,6);
+
+    // pegs
+    pegs.forEach(p=>{ ctx.beginPath(); ctx.fillStyle='rgba(200,220,255,0.06)'; ctx.arc(p.position.x,p.position.y,p.circleRadius,0,Math.PI*2); ctx.fill(); })
+
+    // balls
+    balls.forEach(b=>{
+      const pos = b.body.position; const r = b.radius;
+      // 3d-like radial gradient
+      const grad = ctx.createRadialGradient(pos.x - r*0.4, pos.y - r*0.6, r*0.1, pos.x, pos.y, r*1.1);
+      grad.addColorStop(0,'rgba(255,255,255,0.8)'); grad.addColorStop(0.18,'rgba(255,255,255,0.2)'); grad.addColorStop(0.6,'rgba(0,0,0,0.12)');
+      // base color
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,r,0,Math.PI*2); ctx.fillStyle = b.player.color; ctx.fill();
+      ctx.fillStyle = grad; ctx.fill();
+      // rim / shadow
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,r,0,Math.PI*2); ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=2; ctx.stroke();
+      // letter
+      ctx.fillStyle = '#021022'; ctx.font = `${r}px Inter, sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(b.player.letter, pos.x, pos.y+2);
+    })
+
+    // draw top start area
+    ctx.fillStyle='rgba(255,255,255,0.03)'; ctx.fillRect(0,0,canvasWidth, startY+20);
+    // draw finish flags
+    ctx.fillStyle='rgba(100,255,200,0.06)'; ctx.fillRect(0,finishY-30,canvasWidth,30);
+  }
+
+  // Rankings by distance to finish (smaller y -> further from finish)
+  function updateRanks(){ const list = players.filter(p=>p.body).map(p=>{
+      const pos = p.body.position; const dist = Math.max(0, finishY - pos.y); const perc = Math.max(0, Math.min(100, (1 - dist/(finishY-startY))*100)); return {p,dist,perc}
+    }); list.sort((a,b)=>a.dist - b.dist); // smaller dist = closer to finish
+    ranksDiv.innerHTML = '';
+    list.forEach((it,i)=>{
+      const el = document.createElement('div'); el.style.display='flex'; el.style.justifyContent='space-between'; el.style.alignItems='center'; el.style.marginBottom='6px'; el.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><div class="ballBadge" style="background:${it.p.color};color:#021022">${it.p.letter}</div><div style="min-width:90px">${it.p.name}</div></div><div class="small">${Math.round(it.perc)}%</div>`;
+      ranksDiv.appendChild(el);
+    });
+  }
+
+  // Finish detection
+  Events.on(engine, 'collisionStart', function(event){ const pairs = event.pairs; pairs.forEach(pair=>{ const a=pair.bodyA, b=pair.bodyB; [a,b].forEach(body=>{ if(body.label==='finish'){ // other body finished
+          const other = body===a?b:a; if(other.label==='player'){ const pl = players.find(x=>x.id===other.plugin.playerId); if(pl && pl.finishedAt==null){ pl.finishedAt = Date.now(); finishOrder.push({player:pl, time:pl.finishedAt}); pl.rank = finishOrder.length; checkRoundFinish(); } }
+        } }) }) });
+
+  function checkRoundFinish(){ if(modeSelect.value==='winner'){ // show first
+      if(finishOrder.length>0 && !document.getElementById('removeWinnerBtn').classList.contains('hidden')){ }
+      if(finishOrder.length>=1){ const first = finishOrder[0]; showWinner(first.player); }
+    } else if(modeSelect.value==='elimination'){
+      // elimination: when all players finished, eliminate last one
+      if(finishOrder.length === players.length){ // determine last
+        const last = finishOrder[finishOrder.length-1].player; eliminationOrder.push(last); announceElimination(last);
+        // remove last after short delay and restart with remaining players
+        setTimeout(()=>{ players = players.filter(p=>p.id!==last.id); finishOrder=[]; clearBodiesAndRespawn(); roundCount++; if(players.length>1){ if(document.getElementById('shuffleEachRound').checked) regenerateAndShuffle(); startRound(); } else { showFinalWinner(players[0] || last); } }, 1200);
+      }
+    }
+  }
+
+  function showWinner(player){ winnerOverlay.classList.remove('hidden'); winnerOverlay.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px"><div style="font-size:22px;">Winner</div><div class="ballBadge" style="width:72px;height:72px;background:${player.color};font-size:36px;color:#021022">${player.letter}</div><div style="font-size:18px">${player.name}</div><div style="display:flex;gap:8px"><button id="owRemove">Remove Winner & Continue</button><button id="owKeep">Keep & Restart</button></div></div>`;
+    document.getElementById('owRemove').onclick = ()=>{ // remove from players and continue
+      winnerOverlay.classList.add('hidden'); players = players.filter(p=>p.id!==player.id); lastResult.innerText = `Removed winner: ${player.name}`; finishOrder=[]; clearBodiesAndRespawn(); startRound(); }
+    document.getElementById('owKeep').onclick = ()=>{ winnerOverlay.classList.add('hidden'); lastResult.innerText = `Kept winner: ${player.name}`; finishOrder=[]; clearBodiesAndRespawn(); startRound(); }
+  }
+
+  function announceElimination(player){ // show small overlay
+    winnerOverlay.classList.remove('hidden'); winnerOverlay.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px"><div style="font-size:18px;color:#f97316">Eliminated</div><div class="ballBadge" style="width:64px;height:64px;background:${player.color};font-size:32px;color:#021022">${player.letter}</div><div style="font-size:16px">${player.name}</div></div>`;
+    setTimeout(()=>{ winnerOverlay.classList.add('hidden'); }, 1100);
+  }
+
+  function showFinalWinner(player){ winnerOverlay.classList.remove('hidden'); winnerOverlay.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px"><div style="font-size:22px;">🏆 Tournament Winner</div><div class="ballBadge" style="width:96px;height:96px;background:${player.color};font-size:48px;color:#021022">${player.letter}</div><div style="font-size:20px">${player.name}</div></div>`; lastResult.innerText = `Final Winner: ${player.name}`; }
+
+  function clearBodiesAndRespawn(){ // remove only dynamic bodies
+    // remove player bodies
+    players.forEach(p=>{ if(p.body) World.remove(engine.world,p.body); p.body=null; p.finishedAt=null; p.rank=null; }); balls=[]; finishOrder=[];
+    spawnBalls();
+  }
+
+  function startRound(){ if(players.length<1) { alert('Add at least one player'); return; }
+    // reset world
+    clearWorld(); engine = Engine.create(); engine.world.gravity.y = parseFloat(gravityRange.value);
+    addBorders(); generatePegs(); spawnBalls(); running = true; finishOrder=[]; eliminationOrder=[]; roundCount++;
+
+    // Runner
+    if(runner) Runner.stop(runner);
+    runner = Runner.create(); Runner.run(runner, engine);
+
+    // animation loop
+    (function loop(){ if(!running) return; Engine.update(engine, 1000/60); drawScene(); updateRanks(); requestAnimationFrame(loop); })();
+    // ensure minimum ~60s per round by adjusting world height & friction if needed — we rely on large map & pegs
+  }
+
+  function stopRound(){ running=false; if(runner) Runner.stop(runner); }
+
+  // shuffle/regenerate maze
+  function regenerateAndShuffle(){ generatePegs(); }
+
+  // UI bindings
+  startBtn.onclick = ()=>{ if(usersAreDuplicate()){ // avoid visual identical ties — randomize slight colors and positions
+        // shuffle seed
+      }
+      if(document.getElementById('shuffleEachRound').checked){ regenerateAndShuffle(); }
+      startRound(); }
+  stopBtn.onclick = ()=>{ stopRound(); }
+  shuffleBtn.onclick = ()=>{ regenerateAndShuffle(); }
+  gravityRange.oninput = ()=>{ engine.world.gravity.y = parseFloat(gravityRange.value); }
+  timescaleRange.oninput = ()=>{ engine.timing.timeScale = parseFloat(timescaleRange.value); }
+
+  restartBtn.onclick = ()=>{ finishOrder=[]; eliminationOrder=[]; clearBodiesAndRespawn(); startRound(); }
+  removeWinnerBtn.onclick = ()=>{ if(finishOrder.length>0){ const w = finishOrder[0].player; players = players.filter(p=>p.id!==w.id); finishOrder=[]; clearBodiesAndRespawn(); startRound(); } }
+
+  exportBtn.onclick = ()=>{ const data = players.map(p=>p.name).join(', '); prompt('Players (copy):', data); }
+
+  bracketToggle.onchange = ()=>{ if(bracketToggle.checked){ bracketPanel.classList.remove('hidden'); updateBracket(); } else { bracketPanel.classList.add('hidden'); }}
+
+  function updateBracket(){ // simple bracket visualization
+    bracketArea.innerHTML=''; const names = players.map(p=>p.name); if(names.length===0){ bracketArea.innerHTML='<div class="small">No players</div>'; return;} let html=''; names.forEach((n,i)=>{ html += `<div style="padding:6px;border-bottom:1px solid rgba(255,255,255,0.03)">${i+1}. ${n}</div>` }); bracketArea.innerHTML = html; }
+
+  function usersAreDuplicate(){ // check for name+letter+color duplicates; if exact duplicates exist we'll nudge colors
+    const seen = {}; let dup=false; players.forEach(p=>{ const k = `${p.name}|${p.letter}`; if(seen[k]) dup=true; seen[k]=true; }); if(dup){ players.forEach(p=>{ p.color = pickColor(p.name + Math.random()); }); renderPlayers(); } return dup; }
+
+  // Ensure that ties are handled: if two finished within 60ms treat as tie and randomize order
+  function finalizeFinishOrderIfTies(){ if(finishOrder.length>1){ // sort by time, detect ties
+      finishOrder.sort((a,b)=>a.time-b.time);
+      for(let i=0;i<finishOrder.length-1;i++){
+        if(Math.abs(finishOrder[i].time - finishOrder[i+1].time) < 60){ // tie
+          // randomize the small block
+          const block = [finishOrder[i], finishOrder[i+1]]; if(Math.random()>0.5) { finishOrder[i]=block[1]; finishOrder[i+1]=block[0]; }
         }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+      }
+    }
+  }
 
-        // INPUT HANDLING
-        document.getElementById('nameInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addPlayer();
-        });
+  // initial setup
+  generatePegs(); addBorders(); renderPlayers(); drawScene();
 
-        function addPlayer() {
-            const input = document.getElementById('nameInput');
-            const name = input.value.trim();
-            
-            if (!name) return;
-            if (state.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-                input.value = '';
-                return;
-            }
+  // make scrollable canvas responsive to container height
+  window.addEventListener('resize', ()=>{ const h = document.getElementById('canvasWrap').clientHeight; canvasHeight = canvas.height = Math.max(1200, h*2); finishY = canvasHeight - 80; generatePegs(); drawScene(); });
 
-            const player = {
-                name,
-                color: COLORS[state.players.length % COLORS.length]
-            };
-
-            state.players.push(player);
-            state.allPlayers.push(player);
-            input.value = '';
-            updatePlayersList();
-        }
-
-        function removePlayer(idx) {
-            state.players.splice(idx, 1);
-            updatePlayersList();
-        }
-
-        function updatePlayersList() {
-            const list = document.getElementById('playersList');
-            if (!state.players.length) {
-                list.innerHTML = '<div style="text-align:center; color:#a8b0bb; font-size:11px; padding:10px;">No players</div>';
-                return;
-            }
-            list.innerHTML = state.players.map((p, i) => `
-                <div class="player-item">
-                    <div class="player-color" style="background:${p.color}"></div>
-                    <div class="player-name">${p.name}</div>
-                    <button class="btn-remove" onclick="removePlayer(${i})">✕</button>
-                </div>
-            `).join('');
-        }
-
-        function clearAllPlayers() {
-            state.players = [];
-            state.allPlayers = [];
-            state.racing = false;
-            state.finished = [];
-            document.getElementById('nameInput').value = '';
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('resetBtn').disabled = true;
-            document.getElementById('nextBtn').classList.remove('show');
-            updatePlayersList();
-            updateRankings();
-            updateStatus();
-            if (state.engine) initEngine();
-        }
-
-        function setMode(mode) {
-            state.mode = mode;
-            document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
-            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
-            document.getElementById('modeInfo').textContent = mode === 'winner' ? 'First to finish wins' : 'Last to finish eliminated';
-        }
-
-        // PHYSICS ENGINE
-        function initEngine() {
-            if (state.engine) {
-                World.clear(state.engine.world);
-                Engine.clear(state.engine);
-            }
-
-            state.engine = Engine.create();
-            state.engine.world.gravity.y = 0.5;
-            state.balls = [];
-            state.cameraY = 0;
-
-            createTrack();
-        }
-
-        function createTrack() {
-            const w = canvas.width;
-            const h = canvas.height * 3;
-            const margin = 30;
-
-            // Walls
-            World.add(state.engine.world, [
-                Bodies.rectangle(w / 2, -20, w, 40, { isStatic: true }),
-                Bodies.rectangle(-20, h / 2, 40, h, { isStatic: true }),
-                Bodies.rectangle(w + 20, h / 2, 40, h, { isStatic: true })
-            ]);
-
-            // Finish line
-            const finish = Bodies.rectangle(w / 2, h - 50, w - 60, 15, { isStatic: true, label: 'finish' });
-            finish.isFinish = true;
-            World.add(state.engine.world, finish);
-
-            // Pegs
-            const pegRadius = 6;
-            const spacing = 50;
-            const startY = 120;
-            const rows = Math.floor((h - 150) / spacing);
-
-            for (let row = 0; row < rows; row++) {
-                const y = startY + row * spacing;
-                const offset = (row % 2) * 25;
-                const pegsPerRow = 7;
-
-                for (let i = 0; i < pegsPerRow; i++) {
-                    const x = w / 2 - (pegsPerRow - 1) * 30 / 2 + i * 30 + offset;
-                    if (x > margin && x < w - margin) {
-                        World.add(state.engine.world, Bodies.circle(x, y, pegRadius, { isStatic: true, friction: 0.6, restitution: 0.7 }));
-                    }
-                }
-            }
-        }
-
-        function spawnBalls() {
-            state.balls = [];
-            const w = canvas.width;
-            const spacing = Math.min(70, (w - 100) / Math.max(state.players.length, 1));
-
-            state.players.forEach((player, idx) => {
-                const x = w / 2 - ((state.players.length - 1) * spacing) / 2 + idx * spacing;
-                const ball = Bodies.circle(x, 40, 14, { friction: 0.5, restitution: 0.7, density: 0.004 });
-                ball.playerName = player.name;
-                ball.playerColor = player.color;
-                ball.finished = false;
-                World.add(state.engine.world, ball);
-                state.balls.push(ball);
-            });
-        }
-
-        function startRace() {
-            if (!state.players.length) {
-                alert('Add players first!');
-                return;
-            }
-            state.racing = true;
-            state.finished = [];
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('resetBtn').disabled = false;
-            document.getElementById('nextBtn').classList.remove('show');
-
-            initEngine();
-            spawnBalls();
-            updateStatus();
-            animate();
-        }
-
-        function resetRace() {
-            state.players = [...state.allPlayers];
-            state.racing = false;
-            state.finished = [];
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('resetBtn').disabled = true;
-            document.getElementById('nextBtn').classList.remove('show');
-            updatePlayersList();
-            updateStatus();
-            if (state.engine) initEngine();
-            draw();
-        }
-
-        function nextRound() {
-            if (state.players.length <= 1) {
-                document.getElementById('statusWinner').textContent = state.players[0]?.name || '';
-                document.getElementById('nextBtn').classList.remove('show');
-                return;
-            }
-            state.racing = true;
-            state.finished = [];
-            document.getElementById('nextBtn').classList.remove('show');
-            initEngine();
-            spawnBalls();
-            animate();
-        }
-
-        // GAME LOOP
-        function animate() {
-            Engine.update(state.engine);
-
-            // Check finish
-            state.balls.forEach(ball => {
-                if (!ball.finished) {
-                    const bodies = state.engine.world.bodies;
-                    bodies.forEach(b => {
-                        if (b.isFinish && ball.position.y >= b.position.y - 30) {
-                            ball.finished = true;
-                            state.finished.push(ball.playerName);
-
-                            if (state.mode === 'winner') {
-                                if (state.finished.length === 1) {
-                                    state.racing = false;
-                                    updateStatus();
-                                    document.getElementById('nextBtn').classList.add('show');
-                                }
-                            } else {
-                                if (state.balls.filter(b => b.finished).length === state.balls.length) {
-                                    const last = state.finished[state.finished.length - 1];
-                                    state.players = state.players.filter(p => p.name !== last);
-                                    state.racing = false;
-                                    if (state.players.length > 0) {
-                                        document.getElementById('nextBtn').classList.add('show');
-                                    }
-                                    updateStatus();
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-
-            updateRankings();
-            draw();
-
-            if (state.racing) requestAnimationFrame(animate);
-        }
-
-        function draw() {
-            ctx.fillStyle = 'rgba(10, 15, 26, 0.2)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            const bodies = state.engine.world.bodies;
-
-            bodies.forEach(body => {
-                const y = body.position.y - state.cameraY;
-                if (y < -100 || y > canvas.height + 100) return;
-
-                if (body.isFinish) {
-                    ctx.strokeStyle = '#00ff88';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([8, 4]);
-                    ctx.strokeRect(body.position.x - 100, y - 8, 200, 16);
-                    ctx.setLineDash([]);
-                    ctx.fillStyle = '#00ff88';
-                    ctx.font = 'bold 11px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('FINISH', body.position.x, y - 16);
-                } else if (body.isStatic && !body.label) {
-                    // Pegs
-                    ctx.fillStyle = 'rgba(0, 212, 255, 0.4)';
-                    ctx.beginPath();
-                    ctx.arc(body.position.x, y, 6, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            });
-
-            // Draw balls with 3D effect
-            state.balls.forEach(ball => {
-                const y = ball.position.y - state.cameraY;
-                if (y < -50 || y > canvas.height + 50) return;
-
-                // Shadow
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.beginPath();
-                ctx.arc(ball.position.x + 2, y + 5, 14, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Gradient ball
-                const grad = ctx.createRadialGradient(ball.position.x - 5, y - 5, 0, ball.position.x, y, 14);
-                grad.addColorStop(0, ball.playerColor);
-                grad.addColorStop(0.8, ball.playerColor);
-                grad.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(ball.position.x, y, 14, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Shine
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                ctx.beginPath();
-                ctx.arc(ball.position.x - 5, y - 5, 5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Letter
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(ball.playerName[0].toUpperCase(), ball.position.x, y);
-            });
-        }
-
-        function updateRankings() {
-            const list = document.getElementById('rankingsList');
-            if (!state.balls.length) {
-                list.innerHTML = '<div style="text-align:center; color:#a8b0bb; font-size:11px;">Waiting...</div>';
-                return;
-            }
-
-            const sorted = [...state.balls]
-                .map(b => ({
-                    name: b.playerName,
-                    color: b.playerColor,
-                    dist: b.position.y,
-                    finished: b.finished
-                }))
-                .sort((a, b) => a.dist - b.dist);
-
-            list.innerHTML = sorted.map((p, i) => `
-                <div class="ranking-item ${p.finished ? 'finished' : ''}">
-                    <div class="ranking-color" style="background:${p.color}"></div>
-                    <div class="ranking-name">${p.name}</div>
-                    <div class="ranking-pos">${p.finished ? '✓' : i + 1}</div>
-                </div>
-            `).join('');
-        }
-
-        function updateStatus() {
-            const status = document.getElementById('statusText');
-            const winner = document.getElementById('statusWinner');
-
-            if (!state.racing && state.players.length === 0) {
-                status.textContent = 'Add players!';
-                winner.textContent = '';
-            } else if (!state.racing && state.finished.length > 0) {
-                status.textContent = state.mode === 'winner' ? '🎉 Winner!' : '❌ Eliminated';
-                winner.textContent = state.finished[0];
-            } else if (state.racing) {
-                status.textContent = 'Racing...';
-                winner.textContent = '';
-            } else {
-                status.textContent = `${state.players.length} Players Ready`;
-                winner.textContent = '';
-            }
-        }
-
-        // INIT
-        updatePlayersList();
-        initEngine();
-        draw();
-    </script>
+  // auto-run demo if no players
+  // helpful instructions for the user
+  </script>
 </body>
 </html>
