@@ -6,17 +6,6 @@
     <title>Pogix Race Selector</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/2.0.20/matter.min.js"></script>
     <style>
-        :root {
-            --color-bg-primary: #0a0e27;
-            --color-surface: #1a1f3a;
-            --color-text: #e8eef7;
-            --color-text-secondary: #a8b0bb;
-            --color-primary: #00d4ff;
-            --color-success: #00ff88;
-            --color-accent: #ff6b9d;
-            --color-warn: #ffa500;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -24,1078 +13,751 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
-            color: var(--color-text);
-            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #0a0e27;
+            color: #e8eef7;
             height: 100vh;
+            overflow: hidden;
         }
 
         .container {
             display: flex;
             height: 100vh;
-            gap: 20px;
-            padding: 20px;
-            position: relative;
-            z-index: 10;
+            gap: 15px;
+            padding: 15px;
         }
 
-        .section-left {
-            flex: 0 0 300px;
+        .left-panel {
+            width: 280px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
             overflow-y: auto;
-            position: relative;
-            z-index: 100;
-        }
-
-        .section-center {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .section-right {
-            flex: 0 0 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            position: relative;
-            z-index: 100;
-        }
-
-        .panel {
-            background: var(--color-surface);
-            border-radius: 14px;
-            padding: 18px;
-            border: 1px solid rgba(0, 212, 255, 0.15);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            position: relative;
-            z-index: 101;
+            background: #1a1f3a;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
         }
 
         .panel-title {
+            color: #00d4ff;
+            font-weight: bold;
             font-size: 13px;
-            font-weight: 700;
             text-transform: uppercase;
-            color: var(--color-primary);
-            margin-bottom: 14px;
-            letter-spacing: 1.2px;
+            letter-spacing: 1px;
         }
 
-        /* Input Section */
-        .input-section {
+        .input-group {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            gap: 8px;
         }
 
-        #nameInput {
-            width: 100%;
-            padding: 11px 14px;
-            background: rgba(0, 212, 255, 0.06);
-            border: 1px solid rgba(0, 212, 255, 0.25);
-            border-radius: 9px;
-            color: var(--color-text);
-            font-size: 13px;
-            transition: all 0.3s ease;
-            font-family: 'Segoe UI', sans-serif;
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #e8eef7;
+            border-radius: 6px;
+            font-size: 12px;
         }
 
-        #nameInput:focus {
+        input[type="text"]:focus {
             outline: none;
-            border-color: var(--color-primary);
-            background: rgba(0, 212, 255, 0.12);
-            box-shadow: 0 0 16px rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.15);
+        }
+
+        button {
+            padding: 10px 16px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .players-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 320px;
+            max-height: 300px;
             overflow-y: auto;
-            padding-right: 6px;
         }
 
-        .player-tag {
+        .player-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px 12px;
-            background: rgba(0, 212, 255, 0.08);
-            border: 1px solid rgba(0, 212, 255, 0.25);
-            border-radius: 9px;
+            padding: 8px 10px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 6px;
             font-size: 12px;
-            animation: slideIn 0.3s ease;
-            transition: all 0.2s ease;
+            border: 1px solid rgba(0, 212, 255, 0.25);
         }
 
-        .player-tag:hover {
-            background: rgba(0, 212, 255, 0.12);
-            border-color: rgba(0, 212, 255, 0.4);
-        }
-
-        .player-tag-color {
-            width: 18px;
-            height: 18px;
+        .player-color {
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .player-tag-name {
+        .player-name {
             flex: 1;
-            font-weight: 600;
-            color: var(--color-text);
         }
 
-        .btn-remove-player {
-            background: rgba(255, 107, 157, 0.15);
-            color: var(--color-accent);
-            border: none;
-            border-radius: 5px;
+        .btn-remove {
             padding: 4px 8px;
+            background: rgba(255, 107, 157, 0.6);
+            color: white;
+            border: none;
+            border-radius: 4px;
             font-size: 11px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: 600;
         }
 
-        .btn-remove-player:hover {
-            background: rgba(255, 107, 157, 0.3);
-            transform: scale(1.05);
+        .btn-remove:hover {
+            background: rgba(255, 107, 157, 0.9);
         }
 
-        /* Mode Selection */
         .mode-buttons {
             display: flex;
             gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 11px 12px;
-            border: none;
-            border-radius: 9px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
         }
 
         .btn-mode {
-            background: rgba(0, 212, 255, 0.08);
-            color: var(--color-text-secondary);
+            flex: 1;
+            padding: 10px;
+            background: rgba(0, 212, 255, 0.15);
+            color: #a8b0bb;
             border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
         }
 
         .btn-mode.active {
-            background: var(--color-primary);
+            background: #00d4ff;
             color: #000;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
-            transform: translateY(-2px);
+            border-color: #00d4ff;
+            box-shadow: 0 0 16px rgba(0, 212, 255, 0.5);
         }
 
         .btn-mode:hover {
-            border-color: var(--color-primary);
-            background: rgba(0, 212, 255, 0.12);
+            border-color: #00d4ff;
         }
 
-        /* Control Buttons */
         .control-buttons {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        .btn-control {
-            width: 100%;
-            padding: 13px;
-            border: none;
-            border-radius: 9px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            position: relative;
-            z-index: 102;
-        }
-
         .btn-start {
-            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            background: #00ff88;
             color: #000;
-            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+            font-weight: bold;
+            padding: 12px;
         }
 
         .btn-start:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.6);
-        }
-
-        .btn-start:active:not(:disabled) {
-            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
         }
 
         .btn-reset {
-            background: rgba(255, 165, 0, 0.12);
-            color: var(--color-warn);
-            border: 1px solid rgba(255, 165, 0, 0.35);
+            background: rgba(255, 165, 0, 0.3);
+            color: #ffa500;
+            border: 1px solid rgba(255, 165, 0, 0.4);
+            padding: 10px;
         }
 
         .btn-reset:hover:not(:disabled) {
-            background: rgba(255, 165, 0, 0.2);
-            border-color: var(--color-warn);
-            transform: translateY(-2px);
+            background: rgba(255, 165, 0, 0.5);
         }
 
-        .btn-remove {
-            background: linear-gradient(135deg, #ff6b9d 0%, #ff4466 100%);
-            color: #fff;
-            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
+        .btn-next {
+            background: #ff6b9d;
+            color: white;
+            padding: 10px;
+            display: none;
         }
 
-        .btn-remove:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.6);
+        .btn-next.show {
+            display: block;
         }
 
         .btn-clear {
-            background: rgba(168, 85, 247, 0.12);
+            background: rgba(168, 85, 247, 0.3);
             color: #a855f7;
-            border: 1px solid rgba(168, 85, 247, 0.35);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            padding: 8px;
             font-size: 11px;
         }
 
         .btn-clear:hover:not(:disabled) {
-            background: rgba(168, 85, 247, 0.2);
-            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.5);
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .info-text {
+            font-size: 11px;
+            color: #a8b0bb;
+            margin-top: 8px;
+            line-height: 1.5;
         }
 
-        /* Game Canvas */
-        #gameCanvas {
-            display: block;
+        .center-canvas {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: linear-gradient(180deg, #0a0f1a 0%, #1a232e 100%);
-            border-radius: 14px;
-            border: 1px solid rgba(0, 212, 255, 0.12);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .canvas-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            border-radius: 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
             overflow: hidden;
-        }
-
-        /* Ranking Panel */
-        .ranking-panel {
-            max-height: 700px;
-            overflow-y: auto;
             position: relative;
-            z-index: 101;
         }
 
-        .ranking-list {
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .right-panel {
+            width: 280px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            padding-right: 6px;
+            gap: 15px;
+            background: #1a1f3a;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .status-box {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: #a8b0bb;
+            margin-bottom: 8px;
+        }
+
+        .status-winner {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+        }
+
+        .rankings-box {
+            flex: 1;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            padding: 10px;
+            overflow-y: auto;
         }
 
         .ranking-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: rgba(0, 212, 255, 0.05);
+            gap: 8px;
+            padding: 8px;
+            background: rgba(0, 212, 255, 0.08);
             border-left: 3px solid rgba(0, 212, 255, 0.4);
-            border-radius: 8px;
+            border-radius: 5px;
+            margin-bottom: 6px;
             font-size: 12px;
-            animation: slideIn 0.3s ease;
-            transition: all 0.2s ease;
         }
 
-        .ranking-item:hover {
-            background: rgba(0, 212, 255, 0.1);
-            border-left-color: var(--color-primary);
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-15px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .ranking-item.winner {
+        .ranking-item.finished {
             background: rgba(0, 255, 136, 0.12);
             border-left-color: #00ff88;
-            box-shadow: 0 0 16px rgba(0, 255, 136, 0.25);
-            font-weight: 600;
         }
 
         .ranking-color {
-            width: 24px;
-            height: 24px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             flex-shrink: 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), inset -1px -1px 2px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .ranking-name {
             flex: 1;
-            font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .ranking-pos {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            min-width: 28px;
+            font-weight: bold;
+            color: #a8b0bb;
+            min-width: 20px;
             text-align: right;
-            font-weight: 600;
-        }
-
-        /* Status Display */
-        .status-panel {
-            text-align: center;
-            min-height: 100px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 14px;
-            position: relative;
-            z-index: 101;
-        }
-
-        .status-title {
-            font-size: 13px;
-            color: var(--color-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-
-        .status-winner {
-            font-size: 22px;
-            font-weight: 900;
-            text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
-            animation: pulse 1s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .status-elimination {
-            font-size: 18px;
-            color: var(--color-accent);
-            font-weight: 800;
-            text-shadow: 0 0 16px rgba(255, 107, 157, 0.5);
-        }
-
-        .elimination-order {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            margin-top: 6px;
-            line-height: 1.6;
-        }
-
-        /* Scrollbar Styling */
-        .section-left::-webkit-scrollbar,
-        .ranking-panel::-webkit-scrollbar,
-        .players-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .section-left::-webkit-scrollbar-track,
-        .ranking-panel::-webkit-scrollbar-track,
-        .players-list::-webkit-scrollbar-track {
-            background: rgba(0, 212, 255, 0.05);
-            border-radius: 3px;
-        }
-
-        .section-left::-webkit-scrollbar-thumb,
-        .ranking-panel::-webkit-scrollbar-thumb,
-        .players-list::-webkit-scrollbar-thumb {
-            background: rgba(0, 212, 255, 0.25);
-            border-radius: 3px;
-        }
-
-        .section-left::-webkit-scrollbar-thumb:hover,
-        .ranking-panel::-webkit-scrollbar-thumb:hover,
-        .players-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 212, 255, 0.5);
-        }
-
-        /* Responsive */
-        @media (max-width: 1400px) {
-            .container {
-                flex-direction: column;
-                gap: 15px;
-                padding: 15px;
-            }
-
-            .section-left,
-            .section-right {
-                flex: none;
-                max-width: 100%;
-            }
-
-            .section-center {
-                flex: 1;
-                min-height: 450px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-                gap: 10px;
-            }
-
-            .panel {
-                padding: 14px;
-            }
-
-            .section-center {
-                min-height: 350px;
-            }
-
-            .section-left {
-                flex: 0 0 260px;
-            }
-
-            .section-right {
-                flex: 0 0 240px;
-            }
-        }
-
-        .info-text {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            line-height: 1.6;
-            margin-top: 8px;
-            font-weight: 500;
         }
 
         .hidden {
             display: none !important;
         }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.25);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.5);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Left Section: Input & Controls -->
-        <div class="section-left">
-            <!-- Names Input -->
-            <div class="panel">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+            <div>
                 <div class="panel-title">🎮 Add Players</div>
-                <div class="input-section">
-                    <input 
-                        type="text" 
-                        id="nameInput" 
-                        placeholder="Type name and press Enter..."
-                        onkeypress="handleNameInputKeyPress(event)"
-                    />
-                    <div class="players-list" id="playersList"></div>
-                    <button class="btn btn-clear" onclick="clearAllNames()">Clear All</button>
+                <div class="input-group">
+                    <input type="text" id="nameInput" placeholder="Type name and press Enter">
+                    <button onclick="addPlayer()">Add</button>
                 </div>
+                <div class="players-list" id="playersList"></div>
+                <button class="btn-clear" onclick="clearAllPlayers()">Clear All</button>
                 <p class="info-text">💡 Each name = one colorful marble with its initial</p>
             </div>
 
-            <!-- Mode Selection -->
-            <div class="panel">
+            <div>
                 <div class="panel-title">⚡ Game Mode</div>
                 <div class="mode-buttons">
-                    <button class="btn btn-mode active" data-mode="winner" onclick="setMode('winner')">
-                        🏆 Winner
-                    </button>
-                    <button class="btn btn-mode" data-mode="elimination" onclick="setMode('elimination')">
-                        💀 Elimination
-                    </button>
+                    <button class="btn-mode active" data-mode="winner" onclick="setMode('winner')">🏆 Winner</button>
+                    <button class="btn-mode" data-mode="elimination" onclick="setMode('elimination')">💀 Elim</button>
                 </div>
-                <p class="info-text" id="modeInfo" style="margin-top: 10px;">Race continues after each finish</p>
+                <p class="info-text" id="modeInfo">First marble to finish wins</p>
             </div>
 
-            <!-- Control Buttons -->
-            <div class="panel control-buttons">
-                <button class="btn-control btn-start" onclick="startRace()" id="startBtn">▶ Start Race</button>
-                <button class="btn-control btn-reset" onclick="resetRace()" id="resetBtn">↻ Reset</button>
-                <button class="btn-control btn-remove hidden" onclick="nextRound()" id="nextRoundBtn">⏭ Next Round</button>
+            <div class="control-buttons">
+                <button class="btn-start" id="startBtn" onclick="startRace()">▶ START RACE</button>
+                <button class="btn-reset" id="resetBtn" onclick="resetRace()" disabled>↻ RESET</button>
+                <button class="btn-next" id="nextBtn" onclick="nextRound()">⏭ NEXT ROUND</button>
             </div>
         </div>
 
-        <!-- Center Section: Game Canvas -->
-        <div class="section-center">
-            <div class="canvas-container">
-                <canvas id="gameCanvas"></canvas>
-            </div>
+        <!-- CENTER CANVAS -->
+        <div class="center-canvas">
+            <canvas id="gameCanvas"></canvas>
         </div>
 
-        <!-- Right Section: Rankings & Status -->
-        <div class="section-right">
-            <!-- Status Display -->
-            <div class="panel status-panel">
-                <div id="statusDisplay">
-                    <div class="status-title">Ready!</div>
-                    <div style="font-size: 12px; color: var(--color-text-secondary);">Add players to begin</div>
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+            <div>
+                <div class="panel-title">📊 Status</div>
+                <div class="status-box">
+                    <div class="status-text" id="statusText">Ready to race!</div>
+                    <div class="status-winner" id="statusWinner"></div>
                 </div>
             </div>
 
-            <!-- Rankings -->
-            <div class="panel ranking-panel">
-                <div class="panel-title">📊 Rankings</div>
-                <div class="ranking-list" id="rankingList">
-                    <div style="color: var(--color-text-secondary); font-size: 12px; text-align: center; padding: 20px 0;">
-                        Waiting for players...
-                    </div>
-                </div>
+            <div>
+                <div class="panel-title">📈 Rankings</div>
+                <div class="rankings-box" id="rankingsList"></div>
             </div>
         </div>
     </div>
 
     <script>
-        const Engine = Matter.Engine;
-        const World = Matter.World;
-        const Body = Matter.Body;
-        const Bodies = Matter.Bodies;
-        const Events = Matter.Events;
+        const { Engine, World, Bodies, Body, Events } = Matter;
 
         const COLORS = [
             '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
             '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#A8E6CF',
             '#FFD93D', '#6BCB77', '#FF6584', '#36A2EB', '#FF9F40',
-            '#C9CBCF', '#E91E63', '#00BCD4', '#8BC34A', '#FF5722',
-            '#FF00FF', '#00FFFF', '#FFFF00', '#FF00AA'
+            '#E91E63', '#00BCD4', '#8BC34A', '#FF5722', '#9C27B0'
         ];
 
-        const gameState = {
+        const state = {
             players: [],
-            balls: [],
-            mode: 'winner',
-            isRacing: false,
-            finished: [],
-            eliminated: [],
             allPlayers: [],
+            mode: 'winner',
+            racing: false,
+            finished: [],
             engine: null,
-            bodies: { walls: [], pegs: [], balls: [], finishLine: null },
-            cameraOffset: 0,
-            maxCameraOffset: 0,
-            currentWinner: null
+            balls: [],
+            cameraY: 0
         };
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
         function resizeCanvas() {
-            const container = document.querySelector('.canvas-container');
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
         }
-
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Mouse wheel scrolling for map
-        canvas.addEventListener('wheel', (e) => {
-            if (!gameState.isRacing) return;
-            e.preventDefault();
-            gameState.cameraOffset += e.deltaY * 0.5;
-            gameState.cameraOffset = Math.max(0, Math.min(gameState.cameraOffset, gameState.maxCameraOffset));
+        // INPUT HANDLING
+        document.getElementById('nameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addPlayer();
         });
 
-        function initEngine() {
-            if (gameState.engine) {
-                World.clear(gameState.engine.world);
-                Engine.clear(gameState.engine);
-            }
-
-            gameState.engine = Engine.create();
-            gameState.engine.world.gravity.y = 0.6;
-            gameState.engine.world.gravity.x = 0;
-            gameState.bodies = { walls: [], pegs: [], balls: [], finishLine: null };
-            gameState.cameraOffset = 0;
-
-            createScene();
-        }
-
-        function createScene() {
-            const w = canvas.width;
-            const h = canvas.height * 3;
-            gameState.maxCameraOffset = h - canvas.height;
-
-            const margin = 40;
-            const wallThickness = 15;
-
-            const walls = [
-                Bodies.rectangle(w / 2, -wallThickness / 2, w, wallThickness, { isStatic: true }),
-                Bodies.rectangle(-wallThickness / 2, h / 2, wallThickness, h, { isStatic: true }),
-                Bodies.rectangle(w + wallThickness / 2, h / 2, wallThickness, h, { isStatic: true })
-            ];
-
-            walls.forEach(wall => {
-                World.add(gameState.engine.world, wall);
-                gameState.bodies.walls.push(wall);
-            });
-
-            const finishY = h - margin;
-            const finishLine = Bodies.rectangle(w / 2, finishY, w - margin * 2, 12, {
-                isStatic: true,
-                label: 'finishLine'
-            });
-            finishLine.color = '#00ff88';
-            World.add(gameState.engine.world, finishLine);
-            gameState.bodies.finishLine = finishLine;
-
-            const pegRadius = 7;
-            const pegSpacing = 55;
-            const startY = margin + 80;
-            const pegRows = Math.floor((finishY - startY) / pegSpacing);
-
-            for (let row = 0; row < pegRows; row++) {
-                const y = startY + row * pegSpacing;
-                const offset = (row % 2) * 30;
-                const numPegs = 7;
-
-                for (let i = 0; i < numPegs; i++) {
-                    const x = margin + 80 + (i * (w - margin * 2 - 160) / (numPegs - 1)) + offset;
-                    if (x > margin && x < w - margin) {
-                        const peg = Bodies.circle(x, y, pegRadius, {
-                            isStatic: true,
-                            friction: 0.6,
-                            restitution: 0.75
-                        });
-                        peg.color = 'rgba(0, 212, 255, 0.25)';
-                        World.add(gameState.engine.world, peg);
-                        gameState.bodies.pegs.push(peg);
-                    }
-                }
-            }
-        }
-
-        function addBalls() {
-            const w = canvas.width;
-            const startY = 50;
-            const spacing = Math.min(80, (w - 100) / Math.max(gameState.players.length, 1));
-
-            gameState.bodies.balls = [];
-            gameState.balls = [];
-
-            gameState.players.forEach((player, index) => {
-                const x = w / 2 - ((gameState.players.length - 1) * spacing) / 2 + index * spacing;
-                const ball = Bodies.circle(x, startY, 15, {
-                    friction: 0.5,
-                    restitution: 0.7,
-                    density: 0.004
-                });
-
-                ball.playerIndex = index;
-                ball.color = player.color;
-                ball.playerName = player.name;
-                ball.finished = false;
-
-                World.add(gameState.engine.world, ball);
-                gameState.bodies.balls.push(ball);
-                gameState.balls.push({ body: ball, player: player });
-            });
-        }
-
-        function addPlayerName() {
+        function addPlayer() {
             const input = document.getElementById('nameInput');
             const name = input.value.trim();
-
+            
             if (!name) return;
-
-            if (gameState.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+            if (state.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
                 input.value = '';
                 return;
             }
 
             const player = {
-                name: name,
-                color: COLORS[gameState.players.length % COLORS.length]
+                name,
+                color: COLORS[state.players.length % COLORS.length]
             };
 
-            gameState.players.push(player);
-            gameState.allPlayers.push(player);
+            state.players.push(player);
+            state.allPlayers.push(player);
             input.value = '';
-            input.focus();
             updatePlayersList();
-            updateRankingDisplay();
         }
 
-        function removePlayerName(index) {
-            gameState.players.splice(index, 1);
+        function removePlayer(idx) {
+            state.players.splice(idx, 1);
             updatePlayersList();
-            updateRankingDisplay();
         }
 
         function updatePlayersList() {
             const list = document.getElementById('playersList');
-            if (gameState.players.length === 0) {
-                list.innerHTML = '<div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No players yet</div>';
+            if (!state.players.length) {
+                list.innerHTML = '<div style="text-align:center; color:#a8b0bb; font-size:11px; padding:10px;">No players</div>';
                 return;
             }
-
-            const html = gameState.players.map((player, index) => `
-                <div class="player-tag">
-                    <div class="player-tag-color" style="background: ${player.color};"></div>
-                    <div class="player-tag-name">${player.name}</div>
-                    <button class="btn-remove-player" onclick="removePlayerName(${index})">✕</button>
+            list.innerHTML = state.players.map((p, i) => `
+                <div class="player-item">
+                    <div class="player-color" style="background:${p.color}"></div>
+                    <div class="player-name">${p.name}</div>
+                    <button class="btn-remove" onclick="removePlayer(${i})">✕</button>
                 </div>
             `).join('');
+        }
 
-            list.innerHTML = html;
+        function clearAllPlayers() {
+            state.players = [];
+            state.allPlayers = [];
+            state.racing = false;
+            state.finished = [];
+            document.getElementById('nameInput').value = '';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = true;
+            document.getElementById('nextBtn').classList.remove('show');
+            updatePlayersList();
+            updateRankings();
+            updateStatus();
+            if (state.engine) initEngine();
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            document.getElementById('modeInfo').textContent = mode === 'winner' ? 'First to finish wins' : 'Last to finish eliminated';
+        }
+
+        // PHYSICS ENGINE
+        function initEngine() {
+            if (state.engine) {
+                World.clear(state.engine.world);
+                Engine.clear(state.engine);
+            }
+
+            state.engine = Engine.create();
+            state.engine.world.gravity.y = 0.5;
+            state.balls = [];
+            state.cameraY = 0;
+
+            createTrack();
+        }
+
+        function createTrack() {
+            const w = canvas.width;
+            const h = canvas.height * 3;
+            const margin = 30;
+
+            // Walls
+            World.add(state.engine.world, [
+                Bodies.rectangle(w / 2, -20, w, 40, { isStatic: true }),
+                Bodies.rectangle(-20, h / 2, 40, h, { isStatic: true }),
+                Bodies.rectangle(w + 20, h / 2, 40, h, { isStatic: true })
+            ]);
+
+            // Finish line
+            const finish = Bodies.rectangle(w / 2, h - 50, w - 60, 15, { isStatic: true, label: 'finish' });
+            finish.isFinish = true;
+            World.add(state.engine.world, finish);
+
+            // Pegs
+            const pegRadius = 6;
+            const spacing = 50;
+            const startY = 120;
+            const rows = Math.floor((h - 150) / spacing);
+
+            for (let row = 0; row < rows; row++) {
+                const y = startY + row * spacing;
+                const offset = (row % 2) * 25;
+                const pegsPerRow = 7;
+
+                for (let i = 0; i < pegsPerRow; i++) {
+                    const x = w / 2 - (pegsPerRow - 1) * 30 / 2 + i * 30 + offset;
+                    if (x > margin && x < w - margin) {
+                        World.add(state.engine.world, Bodies.circle(x, y, pegRadius, { isStatic: true, friction: 0.6, restitution: 0.7 }));
+                    }
+                }
+            }
+        }
+
+        function spawnBalls() {
+            state.balls = [];
+            const w = canvas.width;
+            const spacing = Math.min(70, (w - 100) / Math.max(state.players.length, 1));
+
+            state.players.forEach((player, idx) => {
+                const x = w / 2 - ((state.players.length - 1) * spacing) / 2 + idx * spacing;
+                const ball = Bodies.circle(x, 40, 14, { friction: 0.5, restitution: 0.7, density: 0.004 });
+                ball.playerName = player.name;
+                ball.playerColor = player.color;
+                ball.finished = false;
+                World.add(state.engine.world, ball);
+                state.balls.push(ball);
+            });
         }
 
         function startRace() {
-            if (gameState.players.length === 0) {
-                alert('Add at least one player!');
+            if (!state.players.length) {
+                alert('Add players first!');
                 return;
             }
-
-            gameState.finished = [];
-            gameState.isRacing = true;
-            gameState.currentWinner = null;
-
-            initEngine();
-            addBalls();
-
+            state.racing = true;
+            state.finished = [];
             document.getElementById('startBtn').disabled = true;
             document.getElementById('resetBtn').disabled = false;
-            document.getElementById('nextRoundBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('show');
 
-            updateStatusDisplay();
+            initEngine();
+            spawnBalls();
+            updateStatus();
             animate();
         }
 
         function resetRace() {
-            gameState.players = [...gameState.allPlayers];
-            gameState.isRacing = false;
-            gameState.finished = [];
-            gameState.eliminated = [];
-            gameState.currentWinner = null;
-
-            document.getElementById('nameInput').value = '';
+            state.players = [...state.allPlayers];
+            state.racing = false;
+            state.finished = [];
             document.getElementById('startBtn').disabled = false;
-            document.getElementById('startBtn').textContent = '▶ Start Race';
             document.getElementById('resetBtn').disabled = true;
-            document.getElementById('nextRoundBtn').classList.add('hidden');
-
-            initEngine();
+            document.getElementById('nextBtn').classList.remove('show');
             updatePlayersList();
-            updateRankingDisplay();
-            updateStatusDisplay();
+            updateStatus();
+            if (state.engine) initEngine();
             draw();
         }
 
         function nextRound() {
-            if (gameState.players.length <= 1) {
-                document.getElementById('statusDisplay').innerHTML = `
-                    <div class="status-title">🎉 FINAL WINNER 🎉</div>
-                    <div class="status-winner" style="color: ${gameState.players[0]?.color};">${gameState.players[0]?.name}</div>
-                `;
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('nextRoundBtn').classList.add('hidden');
+            if (state.players.length <= 1) {
+                document.getElementById('statusWinner').textContent = state.players[0]?.name || '';
+                document.getElementById('nextBtn').classList.remove('show');
                 return;
             }
-
-            gameState.finished = [];
-            gameState.isRacing = true;
-            document.getElementById('nextRoundBtn').classList.add('hidden');
-
+            state.racing = true;
+            state.finished = [];
+            document.getElementById('nextBtn').classList.remove('show');
             initEngine();
-            addBalls();
-            updateStatusDisplay();
+            spawnBalls();
             animate();
         }
 
-        function clearAllNames() {
-            gameState.players = [];
-            gameState.allPlayers = [];
-            gameState.isRacing = false;
-            gameState.finished = [];
-            gameState.eliminated = [];
+        // GAME LOOP
+        function animate() {
+            Engine.update(state.engine);
 
-            document.getElementById('nameInput').value = '';
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('resetBtn').disabled = true;
-            document.getElementById('nextRoundBtn').classList.add('hidden');
+            // Check finish
+            state.balls.forEach(ball => {
+                if (!ball.finished) {
+                    const bodies = state.engine.world.bodies;
+                    bodies.forEach(b => {
+                        if (b.isFinish && ball.position.y >= b.position.y - 30) {
+                            ball.finished = true;
+                            state.finished.push(ball.playerName);
 
-            initEngine();
-            updatePlayersList();
-            updateRankingDisplay();
-            updateStatusDisplay();
-            draw();
-        }
-
-        function handleNameInputKeyPress(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addPlayerName();
-            }
-        }
-
-        function setMode(mode) {
-            gameState.mode = mode;
-            document.querySelectorAll('.btn-mode').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
-        }
-
-        function checkFinishLine() {
-            if (!gameState.isRacing) return;
-
-            const finishLineY = gameState.bodies.finishLine.position.y;
-
-            gameState.balls.forEach(ballObj => {
-                const ball = ballObj.body;
-                if (!ball.finished && ball.position.y >= finishLineY - 25) {
-                    ball.finished = true;
-                    gameState.finished.push(ballObj.player);
-
-                    if (gameState.finished.length === 1 && gameState.mode === 'winner') {
-                        gameState.currentWinner = ballObj.player;
-                        handleWinnerMode();
-                    }
-
-                    if (gameState.balls.filter(b => b.body.finished).length === gameState.balls.length) {
-                        handleRoundEnd();
-                    }
+                            if (state.mode === 'winner') {
+                                if (state.finished.length === 1) {
+                                    state.racing = false;
+                                    updateStatus();
+                                    document.getElementById('nextBtn').classList.add('show');
+                                }
+                            } else {
+                                if (state.balls.filter(b => b.finished).length === state.balls.length) {
+                                    const last = state.finished[state.finished.length - 1];
+                                    state.players = state.players.filter(p => p.name !== last);
+                                    state.racing = false;
+                                    if (state.players.length > 0) {
+                                        document.getElementById('nextBtn').classList.add('show');
+                                    }
+                                    updateStatus();
+                                }
+                            }
+                        }
+                    });
                 }
             });
-        }
 
-        function handleWinnerMode() {
-            const winner = gameState.currentWinner;
-            document.getElementById('statusDisplay').innerHTML = `
-                <div class="status-title">🎉 WINNER 🎉</div>
-                <div class="status-winner" style="color: ${winner.color};">${winner.name}</div>
-            `;
-        }
+            updateRankings();
+            draw();
 
-        function handleRoundEnd() {
-            gameState.isRacing = false;
-
-            if (gameState.mode === 'elimination') {
-                const lastPlayer = gameState.finished[gameState.finished.length - 1];
-                gameState.players = gameState.players.filter(p => p.name !== lastPlayer.name);
-
-                document.getElementById('statusDisplay').innerHTML = `
-                    <div class="status-title">Eliminated</div>
-                    <div class="status-elimination">${lastPlayer.name}</div>
-                    <div class="elimination-order">Remaining: ${gameState.players.length}</div>
-                `;
-
-                if (gameState.players.length > 0) {
-                    document.getElementById('nextRoundBtn').classList.remove('hidden');
-                } else {
-                    document.getElementById('statusDisplay').innerHTML = `
-                        <div class="status-title">🎉 FINAL WINNER 🎉</div>
-                        <div class="status-winner" style="color: ${gameState.finished[0].color};">${gameState.finished[0].name}</div>
-                    `;
-                }
-            } else {
-                document.getElementById('nextRoundBtn').classList.remove('hidden');
-            }
-        }
-
-        function updateRankingDisplay() {
-            const rankingList = document.getElementById('rankingList');
-
-            if (gameState.players.length === 0) {
-                rankingList.innerHTML = '<div style="color: var(--color-text-secondary); font-size: 12px; text-align: center; padding: 20px 0;">Add players to start</div>';
-                return;
-            }
-
-            if (!gameState.isRacing || gameState.balls.length === 0) {
-                const html = gameState.players.map(player => `
-                    <div class="ranking-item">
-                        <div class="ranking-color" style="background: ${player.color};"></div>
-                        <div class="ranking-name">${player.name}</div>
-                    </div>
-                `).join('');
-                rankingList.innerHTML = html;
-                return;
-            }
-
-            const ranked = gameState.balls
-                .map(ballObj => ({
-                    ...ballObj.player,
-                    distance: gameState.bodies.finishLine.position.y - ballObj.body.position.y,
-                    finished: ballObj.body.finished
-                }))
-                .sort((a, b) => a.distance - b.distance);
-
-            const html = ranked.map((player, index) => {
-                const isFinished = gameState.finished.some(f => f.name === player.name);
-                const className = isFinished ? 'ranking-item winner' : 'ranking-item';
-                const icon = player.finished ? '✓' : (index + 1);
-
-                return `
-                    <div class="${className}">
-                        <div class="ranking-color" style="background: ${player.color};"></div>
-                        <div class="ranking-name">${player.name}</div>
-                        <div class="ranking-pos">${icon}</div>
-                    </div>
-                `;
-            }).join('');
-
-            rankingList.innerHTML = html;
-        }
-
-        function updateStatusDisplay() {
-            if (!gameState.isRacing && gameState.players.length > 0) {
-                document.getElementById('statusDisplay').innerHTML = `
-                    <div class="status-title">Ready</div>
-                    <div style="font-size: 12px; color: var(--color-text-secondary);">${gameState.players.length} Players</div>
-                `;
-            }
-        }
-
-        function drawBall(pos, radius, color, initial) {
-            // 3D Ball effect
-            const gradient = ctx.createRadialGradient(pos.x - 5, pos.y - 5, 0, pos.x, pos.y, radius);
-            gradient.addColorStop(0, color);
-            gradient.addColorStop(0.7, color);
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
-
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Glossy shine
-            const shineGradient = ctx.createRadialGradient(pos.x - 6, pos.y - 6, 0, pos.x, pos.y, radius * 0.4);
-            shineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
-            shineGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = shineGradient;
-            ctx.beginPath();
-            ctx.arc(pos.x - 6, pos.y - 6, radius * 0.6, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Border
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Initial text
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 13px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 1;
-            ctx.fillText(initial, pos.x, pos.y);
-            ctx.shadowColor = 'transparent';
+            if (state.racing) requestAnimationFrame(animate);
         }
 
         function draw() {
-            ctx.fillStyle = 'rgba(10, 15, 26, 0.15)';
+            ctx.fillStyle = 'rgba(10, 15, 26, 0.2)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const offsetY = gameState.cameraOffset;
+            const bodies = state.engine.world.bodies;
 
-            // Finish line
-            if (gameState.bodies.finishLine) {
-                const pos = gameState.bodies.finishLine.position;
-                ctx.strokeStyle = '#00ff88';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([12, 6]);
-                ctx.strokeRect(pos.x - 140, pos.y - offsetY - 6, 280, 12);
-                ctx.setLineDash([]);
+            bodies.forEach(body => {
+                const y = body.position.y - state.cameraY;
+                if (y < -100 || y > canvas.height + 100) return;
 
-                ctx.fillStyle = '#00ff88';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('FINISH LINE', pos.x, pos.y - offsetY - 16);
-            }
-
-            // Pegs
-            gameState.bodies.pegs.forEach(peg => {
-                const y = peg.position.y - offsetY;
-                if (y > -30 && y < canvas.height + 30) {
-                    ctx.fillStyle = 'rgba(0, 212, 255, 0.3)';
+                if (body.isFinish) {
+                    ctx.strokeStyle = '#00ff88';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                    ctx.strokeRect(body.position.x - 100, y - 8, 200, 16);
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#00ff88';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('FINISH', body.position.x, y - 16);
+                } else if (body.isStatic && !body.label) {
+                    // Pegs
+                    ctx.fillStyle = 'rgba(0, 212, 255, 0.4)';
                     ctx.beginPath();
-                    ctx.arc(peg.position.x, y, 7, 0, Math.PI * 2);
+                    ctx.arc(body.position.x, y, 6, 0, Math.PI * 2);
                     ctx.fill();
                 }
             });
 
-            // Walls
-            gameState.bodies.walls.forEach(wall => {
-                const vertices = wall.vertices;
-                ctx.strokeStyle = 'rgba(0, 212, 255, 0.15)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(vertices[0].x, vertices[0].y - offsetY);
-                for (let i = 1; i < vertices.length; i++) {
-                    ctx.lineTo(vertices[i].x, vertices[i].y - offsetY);
-                }
-                ctx.closePath();
-                ctx.stroke();
-            });
+            // Draw balls with 3D effect
+            state.balls.forEach(ball => {
+                const y = ball.position.y - state.cameraY;
+                if (y < -50 || y > canvas.height + 50) return;
 
-            // Balls
-            gameState.bodies.balls.forEach(ball => {
-                const y = ball.position.y - offsetY;
-                if (y > -40 && y < canvas.height + 40) {
-                    drawBall({ x: ball.position.x, y: y }, 15, ball.color, ball.playerName[0].toUpperCase());
-                }
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.arc(ball.position.x + 2, y + 5, 14, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Gradient ball
+                const grad = ctx.createRadialGradient(ball.position.x - 5, y - 5, 0, ball.position.x, y, 14);
+                grad.addColorStop(0, ball.playerColor);
+                grad.addColorStop(0.8, ball.playerColor);
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(ball.position.x, y, 14, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Shine
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(ball.position.x - 5, y - 5, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Letter
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(ball.playerName[0].toUpperCase(), ball.position.x, y);
             });
         }
 
-        function animate() {
-            Engine.update(gameState.engine);
-            checkFinishLine();
-            updateRankingDisplay();
-            draw();
+        function updateRankings() {
+            const list = document.getElementById('rankingsList');
+            if (!state.balls.length) {
+                list.innerHTML = '<div style="text-align:center; color:#a8b0bb; font-size:11px;">Waiting...</div>';
+                return;
+            }
 
-            if (gameState.isRacing) {
-                requestAnimationFrame(animate);
+            const sorted = [...state.balls]
+                .map(b => ({
+                    name: b.playerName,
+                    color: b.playerColor,
+                    dist: b.position.y,
+                    finished: b.finished
+                }))
+                .sort((a, b) => a.dist - b.dist);
+
+            list.innerHTML = sorted.map((p, i) => `
+                <div class="ranking-item ${p.finished ? 'finished' : ''}">
+                    <div class="ranking-color" style="background:${p.color}"></div>
+                    <div class="ranking-name">${p.name}</div>
+                    <div class="ranking-pos">${p.finished ? '✓' : i + 1}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateStatus() {
+            const status = document.getElementById('statusText');
+            const winner = document.getElementById('statusWinner');
+
+            if (!state.racing && state.players.length === 0) {
+                status.textContent = 'Add players!';
+                winner.textContent = '';
+            } else if (!state.racing && state.finished.length > 0) {
+                status.textContent = state.mode === 'winner' ? '🎉 Winner!' : '❌ Eliminated';
+                winner.textContent = state.finished[0];
+            } else if (state.racing) {
+                status.textContent = 'Racing...';
+                winner.textContent = '';
+            } else {
+                status.textContent = `${state.players.length} Players Ready`;
+                winner.textContent = '';
             }
         }
 
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('resetBtn').disabled = true;
+        // INIT
         updatePlayersList();
         initEngine();
         draw();
