@@ -13,37 +13,62 @@
         }
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a2e;
             overflow: hidden;
             height: 100vh;
         }
         #container {
             display: flex;
             height: 100vh;
-            padding: 20px;
-            gap: 20px;
+            gap: 15px;
+            padding: 15px;
         }
         #gameArea {
             flex: 1;
             position: relative;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
+            background: #0f0f1e;
+            border-radius: 10px;
             overflow: hidden;
         }
-        #gameCanvas {
+        #canvasWrapper {
             width: 100%;
             height: 100%;
             overflow-y: auto;
             overflow-x: hidden;
+            position: relative;
+        }
+        #canvasWrapper::-webkit-scrollbar {
+            width: 10px;
+        }
+        #canvasWrapper::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        #canvasWrapper::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.6);
+            border-radius: 5px;
+        }
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        canvas {
+            position: relative;
+            z-index: 2;
         }
         #leaderboard {
-            width: 280px;
+            width: 200px;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 20px;
+            border-radius: 10px;
+            padding: 15px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
-        #setupScreen, #gameScreen {
+        #setupScreen {
             position: absolute;
             top: 0;
             left: 0;
@@ -53,13 +78,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 100;
-        }
-        #gameScreen {
-            display: none;
-            background: transparent;
-            pointer-events: none;
         }
         .setup-box {
             background: white;
@@ -171,20 +191,27 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+        .leaderboard-title {
+            text-align: center;
+            color: #667eea;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
         .leaderboard-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 8px;
+            gap: 6px;
+            padding: 6px;
+            margin-bottom: 5px;
+            border-radius: 6px;
             background: #f8f9fa;
             transition: all 0.3s;
+            font-size: 12px;
         }
         .leaderboard-item.winner {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
-            transform: scale(1.05);
         }
         .leaderboard-item.eliminated {
             opacity: 0.5;
@@ -192,22 +219,26 @@
         }
         .rank {
             font-weight: bold;
-            font-size: 18px;
-            min-width: 30px;
+            font-size: 14px;
+            min-width: 20px;
         }
         .color-dot {
-            width: 24px;
-            height: 24px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
         }
         .player-name {
             flex: 1;
             font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .progress {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
         }
         #winnerModal {
@@ -252,12 +283,19 @@
             background: #667eea;
             color: white;
         }
+        .modal-btn.remove {
+            background: #dc3545;
+            color: white;
+        }
         .modal-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
-        canvas {
-            display: block;
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 100px;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -279,10 +317,12 @@
                     <button class="start-btn" id="startBtn" disabled>Start Race (Need 2+ players)</button>
                 </div>
             </div>
-            <div id="gameCanvas"></div>
+            <div id="canvasWrapper">
+                <canvas id="background"></canvas>
+            </div>
         </div>
         <div id="leaderboard">
-            <h2 style="text-align: center; color: #667eea; margin-bottom: 20px;">🏆 Leaderboard</h2>
+            <div class="leaderboard-title">🏆 Leaderboard</div>
             <div id="leaderboardList"></div>
         </div>
     </div>
@@ -302,8 +342,10 @@
         let isRacing = false;
         let finishLine;
         let eliminatedPlayers = [];
-        let mapHeight = 3000;
-        let gameCanvas;
+        let mapHeight = 4500;
+        let mapWidth = 900;
+        let clouds = [];
+        let canvasWrapper;
 
         // Setup event listeners
         document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -368,11 +410,84 @@
         function startGame() {
             document.getElementById('setupScreen').style.display = 'none';
             initPhysics();
+            createBackground();
             createMaze();
             createBalls();
             isRacing = true;
             updateLeaderboard();
             setupAutoScroll();
+        }
+
+        function createBackground() {
+            const bgCanvas = document.getElementById('background');
+            bgCanvas.width = mapWidth;
+            bgCanvas.height = mapHeight;
+            const ctx = bgCanvas.getContext('2d');
+            
+            // Gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, mapHeight);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(0.5, '#16213e');
+            gradient.addColorStop(1, '#0f3460');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, mapWidth, mapHeight);
+            
+            // Create clouds
+            for (let i = 0; i < 30; i++) {
+                clouds.push({
+                    x: Math.random() * mapWidth,
+                    y: Math.random() * mapHeight,
+                    width: 80 + Math.random() * 100,
+                    height: 40 + Math.random() * 40,
+                    speed: 0.3 + Math.random() * 0.5
+                });
+            }
+            
+            drawClouds(ctx);
+        }
+
+        function drawClouds(ctx) {
+            clouds.forEach(cloud => {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.beginPath();
+                ctx.ellipse(cloud.x, cloud.y, cloud.width, cloud.height, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.ellipse(cloud.x + cloud.width * 0.4, cloud.y - cloud.height * 0.3, cloud.width * 0.6, cloud.height * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.ellipse(cloud.x - cloud.width * 0.4, cloud.y - cloud.height * 0.2, cloud.width * 0.5, cloud.height * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function animateClouds() {
+            if (!isRacing) return;
+            
+            const bgCanvas = document.getElementById('background');
+            const ctx = bgCanvas.getContext('2d');
+            
+            // Redraw background
+            const gradient = ctx.createLinearGradient(0, 0, 0, mapHeight);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(0.5, '#16213e');
+            gradient.addColorStop(1, '#0f3460');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, mapWidth, mapHeight);
+            
+            // Move and draw clouds
+            clouds.forEach(cloud => {
+                cloud.y += cloud.speed;
+                if (cloud.y > mapHeight + cloud.height) {
+                    cloud.y = -cloud.height;
+                    cloud.x = Math.random() * mapWidth;
+                }
+            });
+            
+            drawClouds(ctx);
+            requestAnimationFrame(animateClouds);
         }
 
         function initPhysics() {
@@ -383,18 +498,18 @@
 
             engine = Engine.create();
             world = engine.world;
-            world.gravity.y = 1.2;
+            world.gravity.y = 1.5;
 
-            gameCanvas = document.getElementById('gameCanvas');
-            const gameArea = document.getElementById('gameArea');
+            canvasWrapper = document.getElementById('canvasWrapper');
+            
             render = Render.create({
-                element: gameCanvas,
+                element: canvasWrapper,
                 engine: engine,
                 options: {
-                    width: gameArea.clientWidth,
+                    width: mapWidth,
                     height: mapHeight,
                     wireframes: false,
-                    background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+                    background: 'transparent'
                 }
             });
 
@@ -405,10 +520,10 @@
             // Walls
             const wallOptions = { isStatic: true, render: { fillStyle: '#34495e' } };
             World.add(world, [
-                Bodies.rectangle(render.options.width / 2, -25, render.options.width, 50, wallOptions),
-                Bodies.rectangle(render.options.width / 2, mapHeight + 25, render.options.width, 50, wallOptions),
+                Bodies.rectangle(mapWidth / 2, -25, mapWidth, 50, wallOptions),
+                Bodies.rectangle(mapWidth / 2, mapHeight + 25, mapWidth, 50, wallOptions),
                 Bodies.rectangle(-25, mapHeight / 2, 50, mapHeight, wallOptions),
-                Bodies.rectangle(render.options.width + 25, mapHeight / 2, 50, mapHeight, wallOptions)
+                Bodies.rectangle(mapWidth + 25, mapHeight / 2, 50, mapHeight, wallOptions)
             ]);
 
             finishLine = mapHeight - 100;
@@ -417,161 +532,149 @@
         function createMaze() {
             const Bodies = Matter.Bodies;
             const World = Matter.World;
-            const w = render.options.width;
+            const w = mapWidth;
 
-            // Large diagonal obstacles creating paths
-            const sections = 8;
+            // Large zigzag platforms creating paths
+            const sections = 12;
             for (let i = 1; i <= sections; i++) {
                 const y = (mapHeight / (sections + 1)) * i;
                 
-                // Large angled platforms creating funnels
-                const angle1 = Bodies.rectangle(w * 0.25, y, 200, 20, {
+                // Angled platforms
+                const side = i % 2 === 0 ? 1 : -1;
+                const platform1 = Bodies.rectangle(w * 0.25, y, 280, 25, {
                     isStatic: true,
-                    angle: 0.3,
-                    render: { fillStyle: '#e74c3c' }
+                    angle: 0.4 * side,
+                    render: { fillStyle: '#e74c3c' },
+                    chamfer: { radius: 10 }
                 });
                 
-                const angle2 = Bodies.rectangle(w * 0.75, y, 200, 20, {
+                const platform2 = Bodies.rectangle(w * 0.75, y, 280, 25, {
                     isStatic: true,
-                    angle: -0.3,
-                    render: { fillStyle: '#e74c3c' }
+                    angle: -0.4 * side,
+                    render: { fillStyle: '#e74c3c' },
+                    chamfer: { radius: 10 }
                 });
                 
-                World.add(world, [angle1, angle2]);
+                World.add(world, [platform1, platform2]);
 
-                // Large rotating crosses
+                // Large rotating bars
                 if (i % 2 === 0) {
-                    const cross1 = Bodies.rectangle(w * 0.5, y + 100, 180, 15, {
+                    const rotator = Bodies.rectangle(w * 0.5, y + 120, 250, 20, {
                         isStatic: true,
-                        render: { fillStyle: '#3498db' }
+                        render: { fillStyle: '#3498db' },
+                        chamfer: { radius: 10 }
                     });
                     
-                    World.add(world, cross1);
+                    World.add(world, rotator);
                     
                     let angle = 0;
                     setInterval(() => {
                         if (!isRacing) return;
-                        angle += 0.03;
-                        Matter.Body.setAngle(cross1, angle);
+                        angle += 0.04;
+                        Matter.Body.setAngle(rotator, angle);
                     }, 16);
                 }
 
-                // Moving bumpers
+                // Moving platforms
                 if (i % 3 === 1) {
-                    const bumper = Bodies.rectangle(w / 2, y + 150, 100, 30, {
+                    const mover = Bodies.rectangle(w / 2, y + 180, 140, 35, {
                         isStatic: true,
                         render: { fillStyle: '#e67e22' },
                         chamfer: { radius: 15 }
                     });
                     
-                    World.add(world, bumper);
+                    World.add(world, mover);
                     
                     let startX = w / 2;
                     setInterval(() => {
                         if (!isRacing) return;
-                        Matter.Body.setPosition(bumper, {
-                            x: startX + Math.sin(Date.now() / 800) * 150,
-                            y: bumper.position.y
+                        Matter.Body.setPosition(mover, {
+                            x: startX + Math.sin(Date.now() / 700) * 200,
+                            y: mover.position.y
                         });
                     }, 16);
                 }
 
-                // Large V-shaped funnels
-                if (i % 4 === 0) {
-                    const funnelLeft = Bodies.rectangle(w * 0.3, y + 200, 150, 20, {
-                        isStatic: true,
-                        angle: 0.5,
-                        render: { fillStyle: '#9b59b6' }
-                    });
-                    
-                    const funnelRight = Bodies.rectangle(w * 0.7, y + 200, 150, 20, {
-                        isStatic: true,
-                        angle: -0.5,
-                        render: { fillStyle: '#9b59b6' }
-                    });
-                    
-                    World.add(world, [funnelLeft, funnelRight]);
-                }
-
-                // Spinning wheels
-                if (i % 5 === 2) {
-                    const wheel = Bodies.circle(w * 0.5, y + 250, 60, {
-                        isStatic: true,
-                        render: { 
-                            fillStyle: '#1abc9c',
-                            strokeStyle: '#16a085',
-                            lineWidth: 8
-                        }
-                    });
-                    
-                    // Add spokes
-                    for (let j = 0; j < 4; j++) {
-                        const spoke = Bodies.rectangle(w * 0.5, y + 250, 100, 8, {
+                // Large spinning wheels
+                if (i % 4 === 2) {
+                    for (let j = 0; j < 6; j++) {
+                        const spoke = Bodies.rectangle(w * 0.5, y + 250, 140, 12, {
                             isStatic: true,
-                            render: { fillStyle: '#16a085' }
+                            render: { fillStyle: '#9b59b6' }
                         });
-                        Matter.Body.setPosition(spoke, { x: w * 0.5, y: y + 250 });
+                        Matter.Body.setAngle(spoke, (Math.PI / 3) * j);
                         World.add(world, spoke);
                         
                         setInterval(() => {
                             if (!isRacing) return;
-                            Matter.Body.rotate(spoke, 0.05);
+                            Matter.Body.rotate(spoke, 0.06);
                         }, 16);
                     }
-                    
-                    World.add(world, wheel);
                 }
 
-                // Large slanted platforms creating tight passages
+                // Funnel structures
                 if (i % 3 === 0) {
                     World.add(world, [
-                        Bodies.rectangle(w * 0.2, y + 300, 180, 25, {
+                        Bodies.rectangle(w * 0.35, y + 300, 200, 30, {
                             isStatic: true,
-                            angle: 0.4,
-                            render: { fillStyle: '#f39c12' }
+                            angle: 0.5,
+                            render: { fillStyle: '#1abc9c' },
+                            chamfer: { radius: 15 }
                         }),
-                        Bodies.rectangle(w * 0.8, y + 350, 180, 25, {
+                        Bodies.rectangle(w * 0.65, y + 300, 200, 30, {
                             isStatic: true,
-                            angle: -0.4,
-                            render: { fillStyle: '#f39c12' }
+                            angle: -0.5,
+                            render: { fillStyle: '#1abc9c' },
+                            chamfer: { radius: 15 }
                         })
                     ]);
                 }
             }
 
             // Finish line
-            World.add(world, Bodies.rectangle(w / 2, finishLine, w - 100, 30, {
+            World.add(world, Bodies.rectangle(w / 2, finishLine, w - 100, 40, {
                 isStatic: true,
                 isSensor: true,
                 render: { fillStyle: '#27ae60', opacity: 0.8 }
             }));
 
-            // Anti-stick zones - invisible sensors that give balls a nudge if they're stuck
+            // Strong anti-stick system
             setInterval(() => {
                 if (!isRacing) return;
                 balls.forEach(ball => {
-                    if (Math.abs(ball.velocity.x) < 0.1 && Math.abs(ball.velocity.y) < 0.1) {
+                    const velMag = Math.sqrt(ball.velocity.x ** 2 + ball.velocity.y ** 2);
+                    
+                    // If ball is moving too slowly, give it a strong push
+                    if (velMag < 0.5) {
                         Matter.Body.applyForce(ball, ball.position, {
-                            x: (Math.random() - 0.5) * 0.01,
-                            y: 0.005
+                            x: (Math.random() - 0.5) * 0.03,
+                            y: 0.02
+                        });
+                    }
+                    
+                    // Add downward force to keep balls moving
+                    if (ball.velocity.y < 0.5) {
+                        Matter.Body.applyForce(ball, ball.position, {
+                            x: 0,
+                            y: 0.008
                         });
                     }
                 });
-            }, 500);
+            }, 200);
         }
 
         function createBalls() {
             const Bodies = Matter.Bodies;
             const World = Matter.World;
-            const startY = 50;
-            const spacing = render.options.width / (players.length + 1);
+            const startY = 80;
+            const spacing = mapWidth / (players.length + 1);
 
             players.forEach((player, i) => {
-                const ball = Bodies.circle(spacing * (i + 1), startY, 22, {
-                    restitution: 0.7,
-                    friction: 0.005,
-                    frictionAir: 0.001,
-                    density: 0.05,
+                const ball = Bodies.circle(spacing * (i + 1), startY, 25, {
+                    restitution: 0.8,
+                    friction: 0.002,
+                    frictionAir: 0.0005,
+                    density: 0.06,
                     render: {
                         fillStyle: player.color,
                         strokeStyle: '#fff',
@@ -593,19 +696,19 @@
                     const player = players[ball.playerIndex];
                     const x = ball.position.x;
                     const y = ball.position.y;
-                    const r = 22;
+                    const r = 25;
                     
                     // Shadow
                     ctx.beginPath();
-                    ctx.arc(x + 2, y + 2, r, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.arc(x + 3, y + 3, r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                     ctx.fill();
                     
-                    // Main sphere with gradient
+                    // Main sphere
                     const gradient = ctx.createRadialGradient(x - r/3, y - r/3, 0, x, y, r);
-                    gradient.addColorStop(0, lightenColor(player.color, 40));
+                    gradient.addColorStop(0, lightenColor(player.color, 50));
                     gradient.addColorStop(0.7, player.color);
-                    gradient.addColorStop(1, darkenColor(player.color, 20));
+                    gradient.addColorStop(1, darkenColor(player.color, 30));
                     
                     ctx.beginPath();
                     ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -614,7 +717,7 @@
                     
                     // Highlight
                     const highlight = ctx.createRadialGradient(x - r/2, y - r/2, 0, x - r/2, y - r/2, r/2);
-                    highlight.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+                    highlight.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
                     highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
                     
                     ctx.beginPath();
@@ -624,17 +727,16 @@
                     
                     // Initial
                     ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 18px Arial';
+                    ctx.font = 'bold 20px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
                     ctx.shadowBlur = 4;
                     ctx.fillText(player.initial, x, y);
                     ctx.shadowBlur = 0;
                 });
             });
 
-            // Check for finish
             Matter.Events.on(engine, 'afterUpdate', checkFinish);
         }
 
@@ -655,16 +757,23 @@
         }
 
         function setupAutoScroll() {
+            animateClouds();
+            
             setInterval(() => {
                 if (!isRacing || balls.length === 0) return;
                 
-                // Find the average position of all balls
-                const avgY = balls.reduce((sum, ball) => sum + ball.position.y, 0) / balls.length;
+                // Find leading ball
+                const leadBall = balls.reduce((lead, ball) => 
+                    ball.position.y > lead.position.y ? ball : lead
+                , balls[0]);
                 
-                // Scroll to keep balls in view
-                const scrollTarget = Math.max(0, avgY - 300);
-                gameCanvas.scrollTop = scrollTarget;
-            }, 50);
+                // Smooth scroll to keep leading ball in view
+                const targetScroll = Math.max(0, leadBall.position.y - 400);
+                const currentScroll = canvasWrapper.scrollTop;
+                const diff = targetScroll - currentScroll;
+                
+                canvasWrapper.scrollTop += diff * 0.1;
+            }, 30);
         }
 
         function checkFinish() {
@@ -720,6 +829,7 @@
             
             document.getElementById('modalButtons').innerHTML = `
                 <button class="modal-btn continue" onclick="continueWithoutWinner()">Continue Without Winner</button>
+                <button class="modal-btn remove" onclick="removeWinnerAndRestart()">Remove Winner & Restart</button>
                 <button class="modal-btn restart" onclick="location.reload()">New Game</button>
             `;
             
@@ -738,16 +848,34 @@
                 document.getElementById('winnerName').textContent = remaining[0].name;
                 document.getElementById('winnerName').style.color = remaining[0].color;
                 document.getElementById('modalButtons').innerHTML = `
+                    <button class="modal-btn remove" onclick="removePlayerAndRestart('${remaining[0].name}')">Remove Winner & Restart</button>
                     <button class="modal-btn restart" onclick="location.reload()">New Game</button>
                 `;
             } else {
                 document.getElementById('modalButtons').innerHTML = `
                     <button class="modal-btn continue" onclick="continueElimination()">Continue (${remaining.length} left)</button>
+                    <button class="modal-btn remove" onclick="removePlayerAndRestart('${eliminated.name}')">Remove Player & Restart</button>
                     <button class="modal-btn restart" onclick="location.reload()">New Game</button>
                 `;
             }
             
             modal.style.display = 'block';
+        }
+
+        function removeWinnerAndRestart() {
+            const winnerBall = balls.find(b => b.finished);
+            if (winnerBall) {
+                const winnerIndex = winnerBall.playerIndex;
+                players.splice(winnerIndex, 1);
+                eliminatedPlayers = [];
+                location.reload();
+            }
+        }
+
+        function removePlayerAndRestart(playerName) {
+            players = players.filter(p => p.name !== playerName);
+            eliminatedPlayers = [];
+            location.reload();
         }
 
         function continueWithoutWinner() {
@@ -787,8 +915,8 @@
         }
 
         function resetRace() {
-            const startY = 50;
-            const spacing = render.options.width / (balls.length + 1);
+            const startY = 80;
+            const spacing = mapWidth / (balls.length + 1);
             
             balls.forEach((ball, i) => {
                 Matter.Body.setPosition(ball, { x: spacing * (i + 1), y: startY });
@@ -797,7 +925,7 @@
                 ball.finished = false;
             });
             
-            gameCanvas.scrollTop = 0;
+            canvasWrapper.scrollTop = 0;
             isRacing = true;
             updateLeaderboard();
         }
