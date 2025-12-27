@@ -3,29 +3,29 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Plinko Race Enhanced</title>
+<title>Plinko Race — No Bins, Visible Finish</title>
 <style>
   :root{
-    --bg:#071025;
-    --panel:#071827;
+    --bg:#071827;
+    --panel:#0b1220;
     --accent:#06b6d4;
     --text:#e6eef6;
   }
   html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
   body{background:linear-gradient(180deg,#04101a 0%, #071827 60%);color:var(--text);display:flex;gap:18px;padding:18px;align-items:stretch}
-  .sidebar{width:300px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6);display:flex;flex-direction:column}
+  .sidebar{width:320px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:16px;box-shadow:0 8px 28px rgba(2,6,23,0.6);display:flex;flex-direction:column}
   .sidebar h3{margin:6px 0 12px 0;font-size:16px;color:var(--accent)}
-  .inputBox{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-  .inputBox input{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);outline:none}
-  .namesList{max-height:22vh;overflow:auto;padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px dashed rgba(255,255,255,0.02)}
-  .nameItem{display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px;margin:6px 0}
-  .colorDot{width:18px;height:18px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.6) inset}
-  .controls{display:flex;gap:8px;margin-top:10px}
+  .inputRow{display:flex;gap:8px;margin-bottom:12px}
+  .inputRow input{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);outline:none}
+  .controls{display:flex;gap:8px;margin-bottom:12px}
   button{padding:10px 12px;border-radius:8px;border:none;background:var(--accent);color:#022;cursor:pointer;font-weight:600}
   button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+  .namesList{max-height:46vh;overflow:auto;padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px dashed rgba(255,255,255,0.02)}
+  .nameItem{display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px;margin:6px 0}
+  .colorDot{width:18px;height:18px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.6) inset}
   .main{flex:1;display:flex;flex-direction:column;gap:12px}
   .canvasWrap{flex:1;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:12px;display:flex;flex-direction:column}
-  #gameCanvas{width:100%;height:100%;border-radius:8px;background:linear-gradient(180deg,#071827,#04101a);display:block}
+  #gameCanvas{width:100%;height:100%;border-radius:10px;background:linear-gradient(180deg,#071827,#04101a);display:block}
   .footer{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;color:rgba(255,255,255,0.6)}
   .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#071827;padding:18px;border-radius:12px;box-shadow:0 12px 40px rgba(2,6,23,0.8);min-width:420px;z-index:40}
   .overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);z-index:30}
@@ -33,14 +33,8 @@
   .modal p{margin:0 0 12px 0}
   .modal .opts{display:flex;gap:8px;justify-content:flex-end}
   .small{font-size:13px;color:rgba(255,255,255,0.6)}
-  .leaderboard{margin-top:12px;background:rgba(255,255,255,0.01);padding:8px;border-radius:8px;max-height:36vh;overflow:auto}
-  .lbItem{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px;margin:4px 0}
-  .lbName{display:flex;align-items:center;gap:8px}
-  .stat{font-size:12px;color:rgba(255,255,255,0.6)}
-  .bigCount{font-weight:700;color:var(--accent)}
-  /* scrollbar */
-  .namesList::-webkit-scrollbar, .leaderboard::-webkit-scrollbar{width:8px}
-  .namesList::-webkit-scrollbar-thumb, .leaderboard::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.04);border-radius:6px}
+  .namesList::-webkit-scrollbar{width:8px}
+  .namesList::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.04);border-radius:6px}
   @media (max-width:1000px){
     body{flex-direction:column;padding:12px}
     .sidebar{width:100%}
@@ -49,31 +43,25 @@
 </head>
 <body>
   <div class="sidebar">
-    <h3>Plinko Race Enhanced</h3>
-    <div class="inputBox">
-      <label class="small">Left input</label>
-      <input id="leftInput" placeholder="Type name and press Enter" />
-    </div>
-    <div class="inputBox">
-      <label class="small">Right input</label>
-      <input id="rightInput" placeholder="Type name and press Enter" />
+    <h3>Plinko Race</h3>
+
+    <div class="inputRow">
+      <input id="nameInput" placeholder="Type name and press Enter" />
+      <button id="addBtn">Add</button>
     </div>
 
     <div class="controls">
       <button id="startBtn">Start Race</button>
       <button id="pauseBtn" class="ghost">Pause</button>
-      <button id="clearBtn" class="ghost">Clear</button>
+      <button id="restartBtn" class="ghost">Restart</button>
     </div>
 
-    <h3 style="margin-top:12px">Participants</h3>
+    <h3 style="margin-top:6px">Participants</h3>
     <div class="namesList" id="namesList"></div>
 
     <div style="margin-top:12px">
-      <div class="small">Leaderboard updates in real time while balls are falling</div>
+      <div class="small">Type a name and press Enter or click Add. Use Pause to freeze the simulation.</div>
     </div>
-
-    <h3 style="margin-top:12px">Live Leaderboard</h3>
-    <div class="leaderboard" id="leaderboard"></div>
   </div>
 
   <div class="main">
@@ -82,7 +70,7 @@
     </div>
     <div class="footer">
       <div class="small">Balls: <span id="ballCount">0</span> • Finished: <span id="finishedCount">0</span></div>
-      <div class="small">Map: tall and wide for long rounds • Desktop recommended</div>
+      <div class="small">Finish line is clearly visible at the bottom • Desktop recommended</div>
     </div>
   </div>
 
@@ -91,46 +79,46 @@
     <h2 id="modalTitle">Winner</h2>
     <p id="modalBody"></p>
     <div class="opts">
-      <button id="restartAll">Restart all</button>
-      <button id="restartElimLast" class="ghost">Restart eliminate last</button>
-      <button id="restartElimWinner" class="ghost">Restart eliminate winner</button>
+      <button id="restartAll">Restart (all)</button>
+      <button id="restartElimLast" class="ghost">Restart (eliminate last)</button>
+      <button id="restartElimWinner" class="ghost">Restart (eliminate winner)</button>
     </div>
   </div>
 
 <script>
-/* Enhanced Plinko Race
-   - Slower gravity and taller canvas for long rounds
-   - More peg rows and jitter for natural randomness
-   - Ball-ball collisions for realistic interactions
-   - 3D shading and perspective scaling
-   - Real-time leaderboard showing finished and current positions
-   - Tweak parameters below to adjust round length and realism
+/* Plinko — no bins, visible finish, text input for names, slow settling
+   - Ball size +5%, peg spacing +5%, peg size +5%
+   - Finish line is a bold stripe + banner
+   - Balls settle naturally in finish zone; finishing requires low speed for several frames
 */
 
-/* ====== TUNABLE PARAMETERS ====== */
-const PARAMS = {
-  gravity: 0.055,          // smaller gravity for slower fall
-  friction: 0.999,         // air friction
-  ballBaseRadius: 12,      // base radius in px
-  pegRadius: 6,            // peg radius
-  pegSpacingX: 56,         // horizontal spacing between pegs
-  pegSpacingY: 48,         // vertical spacing between peg rows
-  pegJitter: 6,            // random jitter for peg positions
-  rowsExtra: 6,            // extra rows to add for longer map
-  ballBallRepel: 0.6,      // strength of ball-ball collision response
-  targetRoundSeconds: 65   // target minimum round duration in seconds
-};
-/* ====== END TUNABLE PARAMETERS ====== */
+/* Scales and physics */
+const SCALE_BALL = 1.05;
+const SCALE_PEG = 1.05;
+const SCALE_SPACING = 1.05;
 
-const leftInput = document.getElementById('leftInput');
-const rightInput = document.getElementById('rightInput');
-const namesListEl = document.getElementById('namesList');
+const BALL_RADIUS = 12 * SCALE_BALL;
+const PEG_RADIUS = 6 * SCALE_PEG;
+const PEG_SPACING_X = 56 * SCALE_SPACING;
+const PEG_SPACING_Y = 48 * SCALE_SPACING;
+
+const GRAVITY = 0.03;            // slow gravity
+const FRICTION = 0.9994;         // gentle damping
+const WALL_BOUNCE = 0.82;
+const FINISH_ZONE_HEIGHT = 100;  // larger finish zone for visible area
+const FINISH_LINE_THICK = 10;    // thick finish stripe
+const SETTLE_VEL = 0.12;         // threshold to consider settling
+const SETTLE_FRAMES = 6;         // frames under threshold to mark finished
+
+/* DOM */
+const nameInput = document.getElementById('nameInput');
+const addBtn = document.getElementById('addBtn');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
-const clearBtn = document.getElementById('clearBtn');
+const restartBtn = document.getElementById('restartBtn');
+const namesListEl = document.getElementById('namesList');
 const ballCountEl = document.getElementById('ballCount');
 const finishedCountEl = document.getElementById('finishedCount');
-const leaderboardEl = document.getElementById('leaderboard');
 
 const overlay = document.getElementById('overlay');
 const modal = document.getElementById('modal');
@@ -145,10 +133,9 @@ const ctx = canvas.getContext('2d', { alpha: false });
 
 let DPR = Math.max(1, window.devicePixelRatio || 1);
 function resizeCanvas(){
-  // make canvas tall and wide for long rounds
   const wrap = canvas.parentElement.getBoundingClientRect();
-  const width = Math.max(1000, wrap.width); // ensure wide
-  const height = Math.max(window.innerHeight - 160, 900); // tall to lengthen rounds
+  const width = Math.max(1100, wrap.width);
+  const height = Math.max(window.innerHeight - 180, 1000);
   canvas.style.width = width + 'px';
   canvas.style.height = height + 'px';
   canvas.width = Math.floor(width * DPR);
@@ -158,36 +145,26 @@ function resizeCanvas(){
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// game state
-let participants = []; // {name,color,active:true}
-let balls = []; // dynamic balls
+/* State */
+let participants = []; // {name,color,active}
+let balls = [];        // dynamic balls
 let pegs = [];
-let bins = [];
-let finished = []; // {name,color,binIndex,finishTime}
+let finished = [];     // {name,color,finishTime}
 let running = false;
 let paused = false;
 let startTime = 0;
 let rafId = null;
 
-// color generator
+/* Utilities */
 function colorForIndex(i, total){
   const hue = Math.round((i * 360 / Math.max(1,total)) % 360);
-  return `hsl(${hue} 78% 52%)`;
+  return `hsl(${hue} 85% 55%)`;
 }
 
-// UI functions
-function addParticipant(name){
-  if(!name || !name.trim()) return;
-  name = name.trim();
-  if(participants.some(p=>p.name.toLowerCase()===name.toLowerCase())) return;
-  const idx = participants.length;
-  const color = colorForIndex(idx, Math.max(8, participants.length+1));
-  participants.push({name, color, active:true});
-  renderParticipants();
-}
+/* Participants UI */
 function renderParticipants(){
   namesListEl.innerHTML = '';
-  participants.forEach((p, i)=>{
+  participants.forEach((p,i)=>{
     const div = document.createElement('div');
     div.className = 'nameItem';
     div.innerHTML = `<div class="colorDot" style="background:${p.color}"></div>
@@ -196,7 +173,7 @@ function renderParticipants(){
     namesListEl.appendChild(div);
   });
   namesListEl.querySelectorAll('button').forEach(btn=>{
-    btn.addEventListener('click', e=>{
+    btn.addEventListener('click', ()=>{
       const i = Number(btn.dataset.i);
       participants.splice(i,1);
       participants = participants.map((p, idx)=>({name:p.name, color:colorForIndex(idx, Math.max(8,participants.length)), active:true}));
@@ -206,41 +183,47 @@ function renderParticipants(){
   ballCountEl.textContent = participants.length;
 }
 
-// inputs: add on Enter
-[leftInput, rightInput].forEach(inp=>{
-  inp.addEventListener('keydown', e=>{
-    if(e.key === 'Enter'){
-      addParticipant(inp.value);
-      inp.value = '';
-    }
-  });
+/* Add name via text box */
+function addNameFromInput(){
+  const raw = nameInput.value || '';
+  const name = raw.trim();
+  if(!name) return;
+  if(participants.some(p=>p.name.toLowerCase()===name.toLowerCase())){
+    alert('Name already added.');
+    nameInput.value = '';
+    return;
+  }
+  const idx = participants.length;
+  participants.push({name, color: colorForIndex(idx, Math.max(8, participants.length)), active:true});
+  renderParticipants();
+  nameInput.value = '';
+}
+addBtn.addEventListener('click', addNameFromInput);
+nameInput.addEventListener('keydown', e=>{
+  if(e.key === 'Enter') addNameFromInput();
 });
 
-// clear
-clearBtn.addEventListener('click', ()=>{
-  if(running) return;
+/* Controls */
+pauseBtn.addEventListener('click', ()=>{
+  if(!running) return;
+  paused = !paused;
+  pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+  if(!paused) loop();
+});
+restartBtn.addEventListener('click', ()=>{
   participants = [];
   renderParticipants();
   resetGame();
 });
 
-// physics helpers
-const GRAVITY = PARAMS.gravity;
-const FRICTION = PARAMS.friction;
-const BASE_R = PARAMS.ballBaseRadius;
-const PEG_R = PARAMS.pegRadius;
-const BOUNCE = 0.9;
-
-// build peg field and bins
+/* Map builder (no bins) */
 function buildMap(){
   pegs = [];
-  bins = [];
   const W = canvas.width / DPR;
   const H = canvas.height / DPR;
 
-  // compute columns and rows based on spacing
-  const cols = Math.max(8, Math.floor(W / PARAMS.pegSpacingX));
-  const rows = Math.max(12, Math.floor((H * 0.72) / PARAMS.pegSpacingY) + PARAMS.rowsExtra);
+  const cols = Math.max(8, Math.floor(W / PEG_SPACING_X));
+  const rows = Math.max(12, Math.floor((H * 0.72) / PEG_SPACING_Y) + 8);
 
   const xSpacing = W / Math.max(1, cols);
   const ySpacing = (H * 0.72) / Math.max(1, rows);
@@ -250,118 +233,76 @@ function buildMap(){
     const offset = (r % 2) * (xSpacing/2);
     for(let c=0;c<cols;c++){
       const x = offset + (c + 0.5) * xSpacing;
-      const jitterX = (Math.random()-0.5) * PARAMS.pegJitter;
-      const jitterY = (Math.random()-0.5) * (PARAMS.pegJitter*0.6);
-      pegs.push({x: x + jitterX, y: y + jitterY, r: PEG_R});
+      const jitter = (Math.random()-0.5) * 4;
+      pegs.push({x: x + jitter, y: y + (Math.random()-0.5)*3, r: PEG_RADIUS});
     }
-  }
-
-  // bins at bottom
-  const binCount = Math.max(8, Math.floor(W / 80));
-  const binWidth = W / binCount;
-  for(let i=0;i<binCount;i++){
-    bins.push({x: i*binWidth, w: binWidth});
   }
 }
 
-// reset game
-function resetGame(keepParticipants=true){
+/* Reset */
+function resetGame(keepParticipants=false){
   balls = [];
   finished = [];
   running = false;
   paused = false;
   startTime = 0;
-  finishedCountEl.textContent = '0';
+  renderParticipants();
   buildMap();
   draw();
+  finishedCountEl.textContent = '0';
 }
 
-// spawn balls
+/* Spawn balls */
 function spawnBalls(){
   balls = [];
   const W = canvas.width / DPR;
-  const spawnXStart = W * 0.08;
-  const spawnXEnd = W * 0.92;
+  const spawnXStart = W * 0.12;
+  const spawnXEnd = W * 0.88;
   const spacing = (spawnXEnd - spawnXStart) / Math.max(1, participants.length);
   participants.forEach((p, i)=>{
     if(!p.active) return;
-    const x = spawnXStart + spacing * (i + 0.5) + (Math.random()-0.5)*10;
-    const y = 30 + Math.random()*8;
+    const x = spawnXStart + spacing * (i + 0.5) + (Math.random()-0.5)*6;
+    const y = 30 + Math.random()*6;
     balls.push({
       id: i,
       name: p.name,
       color: p.color,
       x, y,
-      vx: (Math.random()-0.5)*0.4,
+      vx: (Math.random()-0.5)*0.25,
       vy: 0,
-      r: BASE_R,
+      r: BALL_RADIUS,
       finished: false,
       finishTime: null,
-      binIndex: null
+      settleFrames: 0
     });
   });
   ballCountEl.textContent = balls.length;
 }
 
-// ball-ball collision resolution
-function resolveBallCollisions(){
-  const n = balls.length;
-  for(let i=0;i<n;i++){
-    const a = balls[i];
-    if(a.finished) continue;
-    for(let j=i+1;j<n;j++){
-      const b = balls[j];
-      if(b.finished) continue;
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const dist = Math.hypot(dx,dy);
-      const minDist = a.r + b.r;
-      if(dist > 0 && dist < minDist){
-        const nx = dx / dist;
-        const ny = dy / dist;
-        const overlap = (minDist - dist) * 0.5;
-        // push apart
-        a.x -= nx * overlap;
-        a.y -= ny * overlap;
-        b.x += nx * overlap;
-        b.y += ny * overlap;
-        // relative velocity
-        const rvx = b.vx - a.vx;
-        const rvy = b.vy - a.vy;
-        const rel = rvx * nx + rvy * ny;
-        if(rel < 0){
-          const impulse = -(1 + 0.6) * rel * PARAMS.ballBallRepel;
-          const im = 1; // equal mass
-          a.vx -= (impulse * nx) / im;
-          a.vy -= (impulse * ny) / im;
-          b.vx += (impulse * nx) / im;
-          b.vy += (impulse * ny) / im;
-        }
-      }
-    }
-  }
-}
-
-// physics step
+/* Physics step (finish without bins) */
 function stepPhysics(){
   const W = canvas.width / DPR;
   const H = canvas.height / DPR;
+  const finishTop = H - FINISH_ZONE_HEIGHT;
 
-  // integrate and collisions
   for(let b of balls){
     if(b.finished) continue;
+
+    // integrate
     b.vy += GRAVITY;
     b.vx *= FRICTION;
     b.vy *= FRICTION;
     b.x += b.vx;
     b.y += b.vy;
 
-    // wall collisions
-    if(b.x - b.r < 0){ b.x = b.r; b.vx = Math.abs(b.vx) * BOUNCE; }
-    if(b.x + b.r > W){ b.x = W - b.r; b.vx = -Math.abs(b.vx) * BOUNCE; }
+    // walls
+    if(b.x - b.r < 0){ b.x = b.r; b.vx = Math.abs(b.vx) * WALL_BOUNCE; }
+    if(b.x + b.r > W){ b.x = W - b.r; b.vx = -Math.abs(b.vx) * WALL_BOUNCE; }
 
-    // peg collisions
+    // peg collisions (AABB quick skip)
     for(let p of pegs){
+      if(Math.abs(b.x - p.x) > (b.r + p.r + 6)) continue;
+      if(Math.abs(b.y - p.y) > (b.r + p.r + 6)) continue;
       const dx = b.x - p.x;
       const dy = b.y - p.y;
       const dist = Math.hypot(dx,dy);
@@ -373,33 +314,44 @@ function stepPhysics(){
         b.x += nx * overlap;
         b.y += ny * overlap;
         const dot = b.vx * nx + b.vy * ny;
-        b.vx = b.vx - 2 * dot * nx + (Math.random()-0.5)*0.08;
-        b.vy = b.vy - 2 * dot * ny + (Math.random()-0.5)*0.08;
-        b.vx *= 0.98;
-        b.vy *= 0.98;
+        b.vx = b.vx - 2 * dot * nx;
+        b.vy = b.vy - 2 * dot * ny;
+        b.vx *= 0.92;
+        b.vy *= 0.92;
       }
     }
 
-    // floor / bins
-    if(b.y + b.r >= H - 40){
-      const binIndex = Math.min(bins.length-1, Math.floor(b.x / bins[0].w));
-      b.finished = true;
-      b.finishTime = performance.now() - startTime;
-      b.binIndex = binIndex;
-      finished.push({name: b.name, color: b.color, binIndex, finishTime: b.finishTime});
-      finishedCountEl.textContent = finished.length;
-      b.vx = 0;
-      b.vy = 0;
-      b.y = H - 40 - b.r + (Math.random()*6 - 3);
-      b.x = binIndex * bins[0].w + bins[0].w/2 + (Math.random()-0.5)*bins[0].w*0.28;
+    // finish zone: allow bounce and settling; no bins
+    if(b.y + b.r >= finishTop){
+      // keep ball above bottom edge
+      if(b.y + b.r > H - 8) b.y = H - 8 - b.r;
+      // small bounce off bottom
+      if(b.vy > 0) b.vy = -Math.abs(b.vy) * 0.35;
+      // horizontal damping
+      b.vx *= 0.88;
+
+      // settle detection
+      const speed = Math.hypot(b.vx, b.vy);
+      if(speed < SETTLE_VEL){
+        b.settleFrames = (b.settleFrames || 0) + 1;
+      } else {
+        b.settleFrames = 0;
+      }
+      if(b.settleFrames >= SETTLE_FRAMES){
+        b.finished = true;
+        b.finishTime = performance.now() - startTime;
+        finished.push({name: b.name, color: b.color, finishTime: b.finishTime});
+        finishedCountEl.textContent = finished.length;
+        // visually place near where it settled (no bins)
+        b.vx = 0;
+        b.vy = 0;
+        b.y = finishTop + (FINISH_ZONE_HEIGHT/2) - b.r + (Math.random()*6 - 3);
+      }
     }
   }
-
-  // ball-ball collisions after peg interactions
-  resolveBallCollisions();
 }
 
-// draw everything
+/* Draw */
 function draw(){
   const W = canvas.width / DPR;
   const H = canvas.height / DPR;
@@ -412,7 +364,7 @@ function draw(){
   ctx.fillStyle = g;
   ctx.fillRect(0,0,W,H);
 
-  // pegs
+  // pegs (obstacles)
   ctx.fillStyle = 'rgba(255,255,255,0.06)';
   for(let p of pegs){
     ctx.beginPath();
@@ -420,70 +372,53 @@ function draw(){
     ctx.fill();
   }
 
-  // bins separators
-  ctx.fillStyle = 'rgba(255,255,255,0.04)';
-  const binTop = H - 80;
-  for(let i=0;i<bins.length;i++){
-    const x = bins[i].x;
-    ctx.fillRect(x, binTop, 2, 80);
-  }
+  // finish zone and bold finish line
+  const finishTop = H - FINISH_ZONE_HEIGHT;
+  // big stripe
+  ctx.fillStyle = 'rgba(6,182,212,0.12)';
+  ctx.fillRect(0, finishTop, W, FINISH_ZONE_HEIGHT);
+  // thick finish line
+  ctx.fillStyle = 'rgba(6,182,212,0.95)';
+  ctx.fillRect(0, finishTop - FINISH_LINE_THICK, W, FINISH_LINE_THICK);
+  // banner text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '20px Inter, Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('FINISH', W/2, finishTop - FINISH_LINE_THICK - 12);
 
-  // finish area
-  ctx.fillStyle = 'rgba(255,255,255,0.03)';
-  ctx.fillRect(0, H - 40, W, 40);
-
-  // draw balls with 3D shading and perspective scaling
+  // balls (3D shading)
   for(let b of balls){
-    // perspective scale based on y to simulate depth
-    const depthScale = 1 + (b.y / H) * 0.18;
-    const r = b.r * depthScale;
-
     // shadow
     ctx.beginPath();
-    ctx.ellipse(b.x + 8 * depthScale, b.y + 12 * depthScale, r * 1.05, r * 0.55, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,0,0,0.36)';
+    ctx.ellipse(b.x+6, b.y+8, b.r*1.05, b.r*0.6, 0, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fill();
 
-    // sphere gradient
-    const grad = ctx.createRadialGradient(b.x - r*0.35, b.y - r*0.6, r*0.15, b.x, b.y, r*1.4);
-    grad.addColorStop(0, lighten(b.color, 22));
-    grad.addColorStop(0.5, b.color);
-    grad.addColorStop(1, darken(b.color, 18));
+    // main sphere
+    const grad = ctx.createRadialGradient(b.x - b.r*0.3, b.y - b.r*0.6, b.r*0.2, b.x, b.y, b.r*1.2);
+    grad.addColorStop(0, lighten(b.color, 18));
+    grad.addColorStop(0.6, b.color);
+    grad.addColorStop(1, darken(b.color, 12));
     ctx.beginPath();
-    ctx.arc(b.x, b.y, r, 0, Math.PI*2);
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
     ctx.fillStyle = grad;
-    ctx.fill();
-
-    // rim highlight
-    ctx.beginPath();
-    ctx.arc(b.x - r*0.25, b.y - r*0.5, r*0.6, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fill();
-
-    // subtle specular
-    ctx.beginPath();
-    ctx.ellipse(b.x - r*0.35, b.y - r*0.7, r*0.18, r*0.12, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.fill();
 
     // name label
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = `${12 * depthScale}px Inter, Arial`;
+    ctx.font = '11px Inter, Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(b.name, b.x, b.y - r - 10);
+    ctx.fillText(b.name, b.x, b.y - b.r - 8);
   }
 
-  // bins numbers
+  // finished list indicator (small)
   ctx.fillStyle = 'rgba(255,255,255,0.06)';
   ctx.font = '12px Inter, Arial';
-  ctx.textAlign = 'center';
-  for(let i=0;i<bins.length;i++){
-    const cx = bins[i].x + bins[i].w/2;
-    ctx.fillText(i+1, cx, H - 12);
-  }
+  ctx.textAlign = 'left';
+  ctx.fillText(`Finished: ${finished.length}`, 12, 22);
 }
 
-// color helpers
+/* Color helpers */
 function lighten(hsl, amt){
   const m = hsl.match(/hsl\((\d+)\s+(\d+)%\s+(\d+)%\)/);
   if(!m) return hsl;
@@ -497,30 +432,7 @@ function darken(hsl, amt){
   return `hsl(${h} ${s}% ${l}%)`;
 }
 
-// leaderboard update
-function updateLeaderboard(){
-  // finished sorted by finishTime ascending
-  const finishedSorted = [...finished].sort((a,b)=>a.finishTime - b.finishTime);
-  // ongoing sorted by y descending (lower y means higher on screen), so larger y is closer to finish
-  const ongoing = balls.filter(b=>!b.finished).map(b=>({name:b.name,color:b.color,y:b.y}));
-  ongoing.sort((a,b)=>b.y - a.y);
-
-  // build display list: finished first then ongoing
-  const display = finishedSorted.map((f,i)=>({pos:i+1, name:f.name, color:f.color, status:'Finished', time:Math.round(f.finishTime)}))
-    .concat(ongoing.map((o,i)=>({pos: finishedSorted.length + i + 1, name:o.name, color:o.color, status:'Racing', time:null})));
-
-  leaderboardEl.innerHTML = '';
-  display.forEach(item=>{
-    const div = document.createElement('div');
-    div.className = 'lbItem';
-    div.innerHTML = `<div class="lbName"><div style="width:18px;height:18px;border-radius:50%;background:${item.color};box-shadow:0 2px 6px rgba(0,0,0,0.6)"></div>
-                     <div style="margin-left:6px"><strong>${item.name}</strong><div class="stat">${item.status}${item.time ? ' • ' + item.time + ' ms' : ''}</div></div></div>
-                     <div class="bigCount">#${item.pos}</div>`;
-    leaderboardEl.appendChild(div);
-  });
-}
-
-// animation loop
+/* Loop */
 function loop(){
   if(paused){
     rafId = requestAnimationFrame(loop);
@@ -528,17 +440,15 @@ function loop(){
   }
   stepPhysics();
   draw();
-  updateLeaderboard();
-
   if(finished.length === balls.length && balls.length > 0 && running){
     running = false;
-    setTimeout(()=>showWinnerModal(), 400);
+    setTimeout(()=>showWinnerModal(), 350);
   } else {
     rafId = requestAnimationFrame(loop);
   }
 }
 
-// show modal
+/* Winner modal */
 function showWinnerModal(){
   if(finished.length === 0) return;
   finished.sort((a,b)=>a.finishTime - b.finishTime);
@@ -547,21 +457,20 @@ function showWinnerModal(){
   modalTitle.textContent = `Winner: ${winner.name}`;
   modalBody.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
     <div style="width:28px;height:28px;border-radius:50%;background:${winner.color};box-shadow:0 4px 12px rgba(0,0,0,0.6)"></div>
-    <div><strong>${winner.name}</strong><div class="small">Finished in bin ${winner.binIndex+1} • ${Math.round(winner.finishTime)} ms</div></div>
+    <div><strong>${winner.name}</strong><div class="small">Finished in ${Math.round(winner.finishTime)} ms</div></div>
   </div>
-  <div class="small">Last place: <strong>${last.name}</strong> (bin ${last.binIndex+1})</div>`;
+  <div class="small">Last place: <strong>${last.name}</strong></div>`;
   overlay.style.display = 'block';
   modal.style.display = 'block';
 }
 
-// modal actions
+/* Modal actions */
 restartAll.addEventListener('click', ()=>{
   overlay.style.display = 'none';
   modal.style.display = 'none';
   participants = participants.map(p=>({name:p.name,color:p.color,active:true}));
   resetGame();
 });
-
 restartElimLast.addEventListener('click', ()=>{
   overlay.style.display = 'none';
   modal.style.display = 'none';
@@ -572,7 +481,6 @@ restartElimLast.addEventListener('click', ()=>{
   renderParticipants();
   resetGame();
 });
-
 restartElimWinner.addEventListener('click', ()=>{
   overlay.style.display = 'none';
   modal.style.display = 'none';
@@ -584,7 +492,7 @@ restartElimWinner.addEventListener('click', ()=>{
   resetGame();
 });
 
-// start/pause
+/* Start */
 startBtn.addEventListener('click', ()=>{
   if(running) return;
   if(participants.length === 0) return alert('Add at least one name.');
@@ -594,25 +502,18 @@ startBtn.addEventListener('click', ()=>{
   spawnBalls();
   running = true;
   paused = false;
+  pauseBtn.textContent = 'Pause';
   startTime = performance.now();
   if(rafId) cancelAnimationFrame(rafId);
   loop();
 });
-pauseBtn.addEventListener('click', ()=>{
-  if(!running) return;
-  paused = !paused;
-  pauseBtn.textContent = paused ? 'Resume' : 'Pause';
-});
 
-// initial setup
+/* initial */
 resetGame();
-
-// draw initial instruction
 ctx.fillStyle = 'rgba(255,255,255,0.06)';
 ctx.font = '14px Inter, Arial';
 ctx.textAlign = 'center';
-ctx.fillText('Add names and press Start Race. Use many names for a longer round', canvas.width/(2*DPR), canvas.height/(2*DPR));
-
+ctx.fillText('Type a name and press Enter, then Start Race', canvas.width/(2*DPR), canvas.height/(2*DPR));
 </script>
 </body>
 </html>
