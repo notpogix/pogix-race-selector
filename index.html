@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Pogix's Plinko Race — No Bins, Visible Finish</title>
+<title>Pogix Plinko Race — No Bins, Visible Finish</title>
 <style>
   :root{
     --bg:#071827;
@@ -79,6 +79,10 @@
     background:transparent;
     border:1px solid rgba(255,255,255,0.2);
     color:var(--text);
+  }
+  button.danger{
+    background:#ef4444;
+    color:#fee2e2;
   }
   button.ghost:hover{
     background:rgba(255,255,255,0.08);
@@ -271,7 +275,7 @@
 </head>
 <body>
   <div class="sidebar">
-    <h3>Pogix's Plinko Race</h3>
+    <h3>Pogix Plinko Race</h3>
 
     <div class="inputRow">
       <input id="nameInput" placeholder="Type participant name and press Enter..." />
@@ -281,6 +285,7 @@
     <div class="controls">
       <button id="startBtn">Start Race</button>
       <button id="pauseBtn" class="ghost">Pause</button>
+      <button id="endBtn" class="danger">End Race</button>
       <button id="restartBtn" class="ghost">Restart</button>
     </div>
 
@@ -336,7 +341,9 @@ const PEG_SPACING_Y = 48 * SCALE_SPACING;
 
 const GRAVITY = 0.024;
 const FRICTION = 0.9992;
-const WALL_BOUNCE = 0.8;
+const WALL_BOUNCE = 0.82;   // slightly higher to help escape
+const WALL_NUDGE = 0.6;     // small nudge away from walls
+
 const FINISH_ZONE_HEIGHT = 110;
 const FINISH_LINE_THICK = 16;
 const SETTLE_VEL = 0.12;
@@ -346,6 +353,7 @@ const nameInput = document.getElementById('nameInput');
 const addBtn = document.getElementById('addBtn');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
+const endBtn = document.getElementById('endBtn');
 const restartBtn = document.getElementById('restartBtn');
 const namesListEl = document.getElementById('namesList');
 const ballCountEl = document.getElementById('ballCount');
@@ -442,6 +450,22 @@ pauseBtn.addEventListener('click', ()=>{
   pauseBtn.textContent = paused ? 'Resume' : 'Pause';
   if(!paused) loop();
 });
+
+/* End race: immediately stop loop and freeze */
+endBtn.addEventListener('click', ()=>{
+  if(!running) return;
+  running = false;
+  paused = false;
+  if(rafId) cancelAnimationFrame(rafId);
+  // zero velocities so they stop in place
+  balls.forEach(b=>{
+    b.vx = 0;
+    b.vy = 0;
+  });
+  draw();
+  updateLeaderboard(); // show current ranking as final
+});
+
 restartBtn.addEventListener('click', ()=>{
   participants = [];
   renderParticipants();
@@ -524,8 +548,15 @@ function stepPhysics(){
     b.x += b.vx;
     b.y += b.vy;
 
-    if(b.x - b.r < 0){ b.x = b.r; b.vx = Math.abs(b.vx) * WALL_BOUNCE; }
-    if(b.x + b.r > W){ b.x = W - b.r; b.vx = -Math.abs(b.vx) * WALL_BOUNCE; }
+    // walls with nudge to avoid sticking
+    if(b.x - b.r < 0){
+      b.x = b.r + 0.5;
+      b.vx = Math.abs(b.vx) * WALL_BOUNCE + WALL_NUDGE;
+    }
+    if(b.x + b.r > W){
+      b.x = W - b.r - 0.5;
+      b.vx = -Math.abs(b.vx) * WALL_BOUNCE - WALL_NUDGE;
+    }
 
     for(let p of pegs){
       if(Math.abs(b.x - p.x) > (b.r + p.r + 6)) continue;
@@ -572,7 +603,6 @@ function stepPhysics(){
   }
 }
 
-/* Leaderboard items */
 function buildLeaderboardItems(){
   const H = canvas.height / DPR;
   const finishCenter = H - FINISH_ZONE_HEIGHT/2;
@@ -610,7 +640,6 @@ function buildLeaderboardItems(){
   return items;
 }
 
-/* Reset leaderboard UI when no race */
 function resetLeaderboardUI(){
   sidebarLeaderboardEl.innerHTML = `
     <div style="font-size:14px;color:rgba(148,163,184,0.95);">
@@ -619,17 +648,14 @@ function resetLeaderboardUI(){
   `;
 }
 
-/* Live leaderboard (sidebar) */
 function updateLeaderboard(){
   if(!running || balls.length === 0){
     return;
   }
 
   const items = buildLeaderboardItems();
-  const ranked = items;
-
   sidebarLeaderboardEl.innerHTML = '';
-  ranked.forEach((item, idx)=>{
+  items.forEach((item, idx)=>{
     const row = document.createElement('div');
     row.className = 'leaderboardItem';
     const rankDisplay =
@@ -649,7 +675,6 @@ function updateLeaderboard(){
   });
 }
 
-/* Draw */
 function draw(){
   const W = canvas.width / DPR;
   const H = canvas.height / DPR;
